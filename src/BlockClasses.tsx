@@ -1,23 +1,21 @@
 ﻿export class BlockVisual {
-    id: number;
     name: string;
+    executable: BlockExecutable;
 
-    constructor(id: number, name: string) {
-        this.id = id;
+    constructor(name: string, executable: BlockExecutable) {
         this.name = name;
+        this.executable = executable;
     }
 }
 
 export class BlockExecutable {
-    id: number;
     next: BlockExecutable;
 
-    constructor(id: number, next: BlockExecutable) {
-        this.id = id;
+    constructor(next: BlockExecutable) {
         this.next = next;
     }
 
     Execute(): void {
-        return this.next.Execute();
+        this.next.Execute();
     }
 }
