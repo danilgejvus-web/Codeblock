@@ -19,3 +19,7 @@ export class BlockExecutable {
         this.next.Execute();
     }
 }
+
+export interface IValue {
+    AddNew(): void;
+}
