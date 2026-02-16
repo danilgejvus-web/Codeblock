@@ -1,6 +1,6 @@
 import type { IValue } from './BlockClasses';
 
-export class Number implements IValue {
+export class IntegerVar implements IValue {
     name: string;
     value: number;
 
@@ -9,8 +9,11 @@ export class Number implements IValue {
         this.value = value;
     }
 
-    AddNew(): void {
+    getValue(): number | boolean {
+        return this.value;
+    }
 
+    AddNew(): void {
     }
 }
 
@@ -23,7 +26,10 @@ export class Boolean implements IValue {
         this.value = value;
     }
 
-    AddNew(): void {
+    getValue(): number | boolean {
+        return this.value;
+    }
 
+    AddNew(): void {
     }
 }

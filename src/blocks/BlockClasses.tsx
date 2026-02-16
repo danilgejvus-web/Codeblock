@@ -21,5 +21,6 @@ export class BlockExecutable {
 }
 
 export interface IValue {
+    getValue(): number | boolean;
     AddNew(): void;
 }
