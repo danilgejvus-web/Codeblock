@@ -3,9 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <title>codeblock</title>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <header>
+        <div class="contrainerHeader">
+          <h1>CODE BLOCK
+        </h1>
+        <img class ="logo" src="./source/logo.svg" alt="logo">
+        </div>
+        
+      </header>
+      <main>
+        <div class="table">
+          <div class="tableDisplay"></div>
+        </div>
+        <div class="containerCreateBlock">
+          <div class="typeBlock">
+            <ul class="typeBlockUl">
+              <li class="searchForm">
+                <input class ="searchForm__txt" type="text">
+                <button class="searchForm__btn"> <img class ="searchForm__img" src="./source/find_icon.svg" alt=""></button>
+              </li>
+              <li>
+                <button class="btn-type" type="button">
+                  var
+                </button>
+              </li>
+              <li>
+                <button class="btn-type" type="button">
+                  arithmetic
+                </button>
+              </li>
+              <li>
+                <button class="btn-type" type="button">
+                  con and loop
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div class="nameBlock">
+            <ul class="nameBlockUL">
+              <li class="searchForm">
+                <input class ="searchForm__txt" type="text">
+                <button class="searchForm__btn"> <img class ="searchForm__img" src="./source/find_icon.svg" alt=""></button>
+              </li>
+              <li>
+                <button class="btn-name" type="button" id="var">
+                  int
+                </button>
+              </li>
+              <li>
+                <button class="btn-name" type="button" id="var">
+                  string
+                </button>
+              </li>
+              <li>
+                <button class="btn-name" type="button" id="con">
+                  if
+                </button>
+              </li>
+              <li>
+                <button class="btn-name" type="button" id="loop">
+                  for
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div class="imgContainerBlock">
+            <img class ="imgBlock" src="" alt="ВиоБлока">
+          </div>
+        </div>
+      </main>
+      <footer>
+        <ul class="developers">
+          Developers:
+          <li>
+            Барков Данил
+          </li>
+          <li>
+            Гейвус Данил
+          </li>
+          <li>
+            Стариченко Иван
+          </li>
+        </ul>
+      </footer>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

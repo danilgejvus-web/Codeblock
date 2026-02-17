@@ -1,0 +1,108 @@
+
+*{
+    color: #D4D4D4;
+    list-style: none;
+    border: none;
+    
+}
+
+ul{
+    padding: 0;
+}
+body{
+    background-color: #1E1E1E;
+    font-family: Helvetica, sans-serif;
+    word-wrap: none;
+    margin: 0;
+    padding: 0;
+}
+
+.contrainerHeader{
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+h1{
+    margin: 0;
+    margin-left: 2%;
+    font-weight: bold;
+    font-size: 96px;
+    letter-spacing: -5.76px;
+
+}
+.logo{
+    margin-left: 5px;
+    width: 118px;
+    height: 62px;
+}
+.table{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+.tableDisplay{
+    width: 95%;
+    height: 512px;
+    border: 2px, solid, #D6413E;
+
+}
+.containerCreateBlock{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.nameBlock{
+    height: 247px;
+    width: 60%;
+    border: 2px, solid, #D6413E;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    
+    
+}
+.typeBlock{
+    height: 277px;
+    width: 30%;
+    border: 2px, solid, #D6413E;
+    border-top: none;
+    border-left: none;
+    
+}
+
+.imgContainerBlock{
+    width: 30%;
+    height: 277px;
+    border: 2px, solid, #D6413E;
+    border-top: none;
+    border-right: none;
+    
+}
+
+.searchForm{
+    display: inline-flex;
+}
+
+.searchForm__txt{
+}
+.searchForm__img{
+    width: 20px;
+    height: 20px;
+}
+
+footer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.developers{
+    font-size: 14px;
+    color: #515151;
+    text-align: center;
+}
+.developers li{
+    font-size: 14px;
+    color: #515151;
+}
