@@ -80,13 +80,6 @@ h1{
     border-right: none;
     
 }
-
-.searchForm{
-    display: inline-flex;
-}
-
-.searchForm__txt{
-}
 .searchForm__img{
     width: 20px;
     height: 20px;

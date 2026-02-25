@@ -1,3 +1,24 @@
+
+::-webkit-scrollbar {
+  width: 6px;
+
+}
+
+::-webkit-scrollbar-track {
+  background: none;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4D4D4;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #868686;
+}
+
+
+
 .contrainerHeader {
     display: flex;
     align-items: center;
@@ -46,6 +67,7 @@ h1 {
     border-left: none;
 }
 
+
 .nameBlock {
     height: 247px;
     width: 60%;
@@ -53,8 +75,20 @@ h1 {
     border-top: none;
     border-left: none;
     border-right: none;
+    overflow: auto;
 }
 
+.typeBlock,
+.nameBlockUL{
+    display: flex;
+    flex-direction: column;
+}
+ul.nameBlockUL li{
+    border: 2px solid #D6413E;
+    border-left:none;
+    border-top: none;
+    border-right: none;
+}
 .imgContainerBlock {
     width: 30%;
     height: 277px;
@@ -63,13 +97,37 @@ h1 {
     border-right: none;
 }
 
-.searchForm {
+.searchForm{
+    width: 100%;
     display: inline-flex;
+    height: 63;
+}
+ul.nameBlockUL .searchForm{
+    margin-top: 1.5px;
 }
 
+.searchForm__txt{
+    font-size: 32px;
+    padding-left: 43px;
+    padding-bottom: 13px;
+    background: none;
+    width: 100%;
+}
+.searchForm__txt:focus{
+   outline: none;
+}
+.searchForm__btn{
+    padding-right: 11px;
+    background: none;
+}
+
+.nameBlock .searchForm__btn{
+    padding-right: 40px;
+    padding-bottom: 13px;
+}
 .searchForm__img {
-    width: 20px;
-    height: 20px;
+    width: 43px;
+    height: 37px;
 }
 
 footer {
@@ -94,6 +152,31 @@ footer {
 .btn-name {
     cursor: pointer;
     transition: all 0.2s;
+    width: 100%
+
+}
+ul.typeBlockUl li{
+    border: 2px solid #D6413E;
+    height: 70px;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    background: none;
+}
+ul.typeBlockUl li:last-child{
+    border: none;
+}
+.btn-type{
+    background: none;
+    height: 100%;
+}
+ul.nameBlockUl li:last-child{
+    border: none;
+}
+.btn-name{
+    
+    background: none;
+    height: 31px;
 }
 
 .btn-type:hover,

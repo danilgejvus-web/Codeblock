@@ -16,6 +16,8 @@ function App() {
   const [draggedBlock, setDraggedBlock] = useState<{ type: string; name: string } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [searchType, setSearchType] = useState('');
+  const [searchName, setSearchName] = useState('');
 
   const blockTypes = [
     { id: 'var', name: 'var' },
@@ -36,7 +38,9 @@ function App() {
     { id: 'longname', name: 'Длинное название блока очень', typeId: 'var', longText: true },
   ];
 
-  const filteredBlockNames = selectedType ? blockNames.filter(b => b.typeId === selectedType): [];
+  const filteredBlockNames = blockNames
+    .filter(block => !selectedType || block.typeId === selectedType)
+    .filter(block => block.name.toLowerCase().includes(searchName.toLowerCase()));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -196,16 +200,23 @@ function App() {
           <div className="typeBlock">
             <ul className="typeBlockUl">
               <li className="searchForm">
-                <input className="searchForm__txt" type="text" placeholder="Поиск..." />
-                <button className="searchForm__btn">
+                <input className="searchForm__txt" type="text" placeholder="Поиск..." 
+                  value={searchType}
+                  onChange={(e) => setSearchType(e.target.value)}
+                />
+                <button 
+                  className="searchForm__btn"
+                >
                   <img className="searchForm__img" src="/source/find_icon.svg" alt="search" />
                 </button>
               </li>
-              {blockTypes.map(type => (
+              {blockTypes
+                .filter(type => type.name.toLowerCase().includes(searchType.toLowerCase()))
+                .map(type => (
                 <li key={type.id}>
                   <button 
                     className={`btn-type ${selectedType === type.id ? 'active' : ''}`}
-                    onClick={() => setSelectedType(type.id)}
+                    onClick={() => setSelectedType(selectedType === type.id ? null : type.id)}
                   >
                     {type.name}
                   </button>
@@ -217,12 +228,19 @@ function App() {
           <div className="nameBlock">
             <ul className="nameBlockUL">
               <li className="searchForm">
-                <input className="searchForm__txt" type="text" placeholder="Поиск..." />
-                <button className="searchForm__btn">
+                <input 
+                  className="searchForm__txt" 
+                  type="text" 
+                  placeholder="Поиск..." 
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                />
+                <button 
+                  className="searchForm__btn"
+                >
                   <img className="searchForm__img" src="/source/find_icon.svg" alt="search" />
                 </button>
               </li>
-              
               {filteredBlockNames.map(block => (
                 <li key={block.id}>
                   <button 
