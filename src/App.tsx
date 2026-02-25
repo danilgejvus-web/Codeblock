@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
-
-interface Block {
-  id: string;
-  type: string;
-  name: string;
-  x: number;
-  y: number;
-}
+import type { Block } from './blocks/BlockMetadata';
 
 function App() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
