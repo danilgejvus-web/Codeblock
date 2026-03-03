@@ -12,7 +12,7 @@ export class WhileBlock implements ExecutableBlock {
         const stateInputID = subGraph.in.get('in');
         const nextStateOutputID = subGraph.out.get('out');
 
-        while (inputs['condition']) {
+        if (inputs['condition']) {
             const subInputs = new Map<string, any>();
             subInputs.set(stateInputID!, currentState);
 
@@ -22,6 +22,7 @@ export class WhileBlock implements ExecutableBlock {
             if (nextState !== undefined) {
                 currentState = nextState;
             }
+            this.execute(inputs, context);
         }
 
         return { outputs: currentState };
