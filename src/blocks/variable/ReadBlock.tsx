@@ -7,7 +7,7 @@ export class ReadBlock implements ExecutableBlock {
         this.variableName = name;
     }
 
-    execute(inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
+    execute(_inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
         const value = context.getVariable(this.variableName);
         return { value: value };
     }
