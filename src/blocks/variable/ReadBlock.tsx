@@ -7,8 +7,13 @@ export class ReadBlock implements ExecutableBlock {
         this.variableName = name;
     }
 
-    execute(_inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
-        const value = context.getVariable(this.variableName);
-        return { value: value };
+    execute(inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
+        if (inputs['in1'] !== undefined) {
+            this.variableName = inputs['in1'];
+            const value = context.getVariable(this.variableName);
+            return { value: value };
+        }
+
+        return {};
     }
 }

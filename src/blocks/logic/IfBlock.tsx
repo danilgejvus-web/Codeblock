@@ -3,7 +3,7 @@ import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput
 export class IfBlock implements ExecutableBlock {
     execute(inputs: ExecutionInput, _context: ExecutionContext): ExecutionOutput {
         const bool = inputs['bool'];
-        const passValue = inputs['input'];
+        const passValue = inputs['passInput'];
 
         if (bool == true) {
             return { true: passValue };

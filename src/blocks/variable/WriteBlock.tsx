@@ -8,7 +8,8 @@ export class WriteBlock implements ExecutableBlock {
     }
 
     execute(inputs: ExecutionInput, context: { setVariable: (name: string, value: any) => void }): ExecutionOutput {
-        if (inputs['set'] !== undefined) {
+        if (inputs['set'] !== undefined && inputs['setName'] !== undefined) {
+            this.variableName = inputs['setName'];
             context.setVariable(this.variableName, inputs['set']);
             return { value: inputs['set'] };
         }
