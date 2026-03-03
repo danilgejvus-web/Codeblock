@@ -14,6 +14,11 @@ export interface ExecutionOutput {
     [socketID: string]: any;
 }
 
+export interface ExecutionContext {
+    getVariable(name: string): any;
+    setVariable(name: string, value: any): void;
+}
+
 export interface ExecutableBlock {
-    execute(inputs: ExecutionInput): ExecutionOutput;
+    execute(inputs: ExecutionInput, context: ExecutionContext): ExecutionOutput;
 }
