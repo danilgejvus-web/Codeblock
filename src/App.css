@@ -189,3 +189,44 @@ ul.nameBlockUl li:last-child{
     background-color: #D6413E;
     color: white;
 }
+.toolbar {
+    position: absolute;
+    top: 20px;
+    right: 320px;
+    z-index: 100;
+    display: flex;
+    gap: 10px;
+}
+
+.run-btn, .clear-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    background: #D6413E;
+    color: white;
+}
+
+.run-btn { 
+    background: #D6413E; 
+}
+.clear-btn { 
+    background: #D4D4D4; 
+}
+.execution-result {
+    padding: 15px;
+    background: #1E1E1E;
+    border-top: 2px solid #D6413E;
+}
+
+.execution-result h3 {
+    color: #D4D4D4;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.execution-result pre {
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 4px;
+}
