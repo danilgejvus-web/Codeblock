@@ -3,6 +3,7 @@ import { DivBlock } from "./arithmetic/DivBlock";
 import { MulBlock } from "./arithmetic/MulBlock";
 import { SubBlock } from "./arithmetic/SubBlock";
 import { SumBlock } from "./arithmetic/SumBlock";
+import { AndBlock } from "./logic/AndBlock";
 import { EndIfBlock } from "./logic/EndIfBlock";
 import { EqualBlock } from "./logic/EqualBlock";
 import { GreaterBlock } from "./logic/GreaterBlock";
@@ -10,6 +11,8 @@ import { GreaterEqualBlock } from "./logic/GreaterEqualBlock";
 import { IfBlock } from "./logic/IfBlock";
 import { LessBlock } from "./logic/LessBlock";
 import { LessEqualBlock } from "./logic/LessEqualBlock";
+import { NotBlock } from "./logic/NotBlock";
+import { OrBlock } from "./logic/OrBlock";
 import { BoolBlock } from "./variable/BoolBlock";
 import { NumBlock } from "./variable/NumBlock";
 import { ReadBlock } from "./variable/ReadBlock";
@@ -149,6 +152,32 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "set", type: "input", name: "SetValue"},
             {id: "setName", type: "input", name: "SetName"},
             {id: "out", type: "output", name: "value"}
+        ]
+    },
+    And: {
+        name: "And",
+        class: AndBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Or: {
+        name: "Or",
+        class: OrBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Not: {
+        name: "Not",
+        class: NotBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "out", type: "output", name: "out"}
         ]
     }
 }
