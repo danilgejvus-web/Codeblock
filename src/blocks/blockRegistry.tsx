@@ -10,6 +10,7 @@ import { GreaterEqualBlock } from "./logic/GreaterEqualBlock";
 import { IfBlock } from "./logic/IfBlock";
 import { LessBlock } from "./logic/LessBlock";
 import { LessEqualBlock } from "./logic/LessEqualBlock";
+import { BoolBlock } from "./variable/BoolBlock";
 import { NumBlock } from "./variable/NumBlock";
 import { ReadBlock } from "./variable/ReadBlock";
 import { WriteBlock } from "./variable/WriteBlock";
@@ -139,6 +140,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "in1", type: "input", name: "A"},
             {id: "in2", type: "input", name: "B"},
             {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Bool: {
+        name: "Bool",
+        class: BoolBlock,
+        sockets: [
+            {id: "set", type: "input", name: "SetValue"},
+            {id: "setName", type: "input", name: "SetName"},
+            {id: "out", type: "output", name: "value"}
         ]
     }
 }
