@@ -4,7 +4,12 @@ import { MulBlock } from "./arithmetic/MulBlock";
 import { SubBlock } from "./arithmetic/SubBlock";
 import { SumBlock } from "./arithmetic/SumBlock";
 import { EndIfBlock } from "./logic/EndIfBlock";
+import { EqualBlock } from "./logic/EqualBlock";
+import { GreaterBlock } from "./logic/GreaterBlock";
+import { GreaterEqualBlock } from "./logic/GreaterEqualBlock";
 import { IfBlock } from "./logic/IfBlock";
+import { LessBlock } from "./logic/LessBlock";
+import { LessEqualBlock } from "./logic/LessEqualBlock";
 import { NumBlock } from "./variable/NumBlock";
 import { ReadBlock } from "./variable/ReadBlock";
 import { WriteBlock } from "./variable/WriteBlock";
@@ -78,17 +83,62 @@ export const blockRegistry: Record<string, BlockInfo> = {
         sockets: [
             {id: "bool", type: "input", name: "Condition"},
             {id: "passInput", type: "input", name: "PassInput"},
-            {id: "true", type: "output", name: "ConditionalBranch1"},
-            {id: "false", type: "output", name: "ConditionalBranch2"}
+            {id: "true", type: "output", name: "True"},
+            {id: "false", type: "output", name: "False"}
         ]
     },
     EndIf: {
         name: "EndIf",
         class: EndIfBlock,
         sockets: [
-            {id: "in1", type: "input", name: "Branch1"},
-            {id: "in2", type: "input", name: "Branch2"},
+            {id: "in1", type: "input", name: "BranchA"},
+            {id: "in2", type: "input", name: "BranchB"},
             {id: "out", type: "output", name: "Merged"},
+        ]
+    },
+    Equal: {
+        name: "Equal",
+        class: EqualBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Less: {
+        name: "Less",
+        class: LessBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Greater: {
+        name: "Greater",
+        class: GreaterBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    LessEqual: {
+        name: "LessEqual",
+        class: LessEqualBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    GreaterEqual: {
+        name: "GreaterEqual",
+        class: GreaterEqualBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
         ]
     }
 }
