@@ -1,5 +1,6 @@
 import type { BlockInfo } from "./BlockMetadata";
 import { DivBlock } from "./arithmetic/DivBlock";
+import { ModBlock } from "./arithmetic/ModBlock";
 import { MulBlock } from "./arithmetic/MulBlock";
 import { SubBlock } from "./arithmetic/SubBlock";
 import { SumBlock } from "./arithmetic/SumBlock";
@@ -12,6 +13,7 @@ import { IfBlock } from "./logic/IfBlock";
 import { LessBlock } from "./logic/LessBlock";
 import { LessEqualBlock } from "./logic/LessEqualBlock";
 import { NotBlock } from "./logic/NotBlock";
+import { NotEqualBlock } from "./logic/NotEqualBlock";
 import { OrBlock } from "./logic/OrBlock";
 import { WhileBlock } from "./logic/WhileBlock";
 import { BoolBlock } from "./variable/BoolBlock";
@@ -50,6 +52,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
     Div: {
         name: "Div",
         class: DivBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Mod: {
+        name: "Mod",
+        class: ModBlock,
         sockets: [
             {id: "in1", type: "input", name: "A"},
             {id: "in2", type: "input", name: "B"},
@@ -140,6 +151,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
     GreaterEqual: {
         name: "GreaterEqual",
         class: GreaterEqualBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "A"},
+            {id: "in2", type: "input", name: "B"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    NotEqual: {
+        name: "NotEqual",
+        class: NotEqualBlock,
         sockets: [
             {id: "in1", type: "input", name: "A"},
             {id: "in2", type: "input", name: "B"},
