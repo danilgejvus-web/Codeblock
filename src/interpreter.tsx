@@ -1,7 +1,13 @@
 import type { ExecutionInput, ExecutionOutput, Connection } from "./blocks/ExecutableBlock";
 import type { Block } from './blocks/BlockMetadata';
 
-export function execute(blocks: Block[], connections: Connection[], context: { getVariable: any; setVariable: any; }): Map<string, ExecutionOutput> {
+export function execute(
+    blocks: Block[],
+    connections: Connection[],
+    context: { getVariable: any; setVariable: any; getSubGraph: any; newSubContext: any; executeSubGraph: any; },
+)
+: Map<string, ExecutionOutput> 
+{
     const graph = new Map<string, string[]>();
     const inDegree = new Map<string, number>();
     const inputSources = new Map<string, Map<string, { fromBlockID: string, fromSocketID: string }>>();
@@ -52,6 +58,16 @@ export function execute(blocks: Block[], connections: Connection[], context: { g
                 inputs[toSocketID] = sourceOutput[sourceInfo.fromSocketID];
             }
         });
+
+        if (block.subGraph) {
+            const subInput = new Map<string, any>();
+            block.subGraph.in.forEach((inputBlockID, socketID) => {
+                const inValue = inputs[socketID];
+                if (inValue !== undefined) {
+                    subInput.set(inputBlockID, inValue);
+                }
+            })
+        }
 
         const output = instance!.execute(inputs, context);
         outputs.set(blockID, output);

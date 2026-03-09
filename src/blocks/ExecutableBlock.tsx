@@ -1,3 +1,5 @@
+import type { SubGraph } from "./BlockMetadata";
+
 export interface Connection {
     id: string;
     fromBlockID: string;
@@ -17,6 +19,9 @@ export interface ExecutionOutput {
 export interface ExecutionContext {
     getVariable(name: string): any;
     setVariable(name: string, value: any): void;
+    getSubGraph(): SubGraph;
+    newSubContext(): ExecutionContext;
+    executeSubGraph(subGraph: SubGraph, inputs: Map<string, any>, newContext: ExecutionContext): Map<string, any>;
 }
 
 export interface ExecutableBlock {

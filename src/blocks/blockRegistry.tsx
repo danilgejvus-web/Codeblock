@@ -13,6 +13,7 @@ import { LessBlock } from "./logic/LessBlock";
 import { LessEqualBlock } from "./logic/LessEqualBlock";
 import { NotBlock } from "./logic/NotBlock";
 import { OrBlock } from "./logic/OrBlock";
+import { WhileBlock } from "./logic/WhileBlock";
 import { BoolBlock } from "./variable/BoolBlock";
 import { NumBlock } from "./variable/NumBlock";
 import { ReadBlock } from "./variable/ReadBlock";
@@ -178,6 +179,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
         sockets: [
             {id: "in1", type: "input", name: "A"},
             {id: "out", type: "output", name: "out"}
+        ]
+    },
+    While: {
+        name: "While",
+        class: WhileBlock,
+        sockets: [
+            {id: "in", type: "input", name: "In"},
+            {id: "condition", type: "input", name: "Condition"},
+            {id: "out", type: "output", name: "Out"}
         ]
     }
 }

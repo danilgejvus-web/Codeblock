@@ -1,4 +1,4 @@
-import type { ExecutableBlock } from "./ExecutableBlock";
+import type { Connection, ExecutableBlock } from "./ExecutableBlock";
 
 export interface Socket {
     id: string;
@@ -13,10 +13,18 @@ export interface Block {
   x: number;
   y: number;
   instance?: ExecutableBlock;
+  subGraph?: SubGraph;
 }
 
 export interface BlockInfo {
     name: string;
     class: new () => ExecutableBlock;
     sockets: Socket[];
+}
+
+export interface SubGraph {
+    blocks: Block[];
+    connections: Connection[];
+    in: Map<string, string>;
+    out: Map<string, string>;
 }

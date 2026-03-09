@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-interface VariableStorage {
+export interface VariableStorage {
     [name: string]: any;
 }
 
