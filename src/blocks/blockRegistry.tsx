@@ -17,8 +17,11 @@ import { NotEqualBlock } from "./logic/NotEqualBlock";
 import { OrBlock } from "./logic/OrBlock";
 import { WhileBlock } from "./logic/WhileBlock";
 import { BoolBlock } from "./variable/BoolBlock";
+import { NumArrayBlock } from "./variable/NumArrayBlock";
 import { NumBlock } from "./variable/NumBlock";
+import { ReadArrayBlock } from "./variable/ReadArrayBlock";
 import { ReadBlock } from "./variable/ReadBlock";
+import { WriteArrayBlock } from "./variable/WriteArrayBlock";
 import { WriteBlock } from "./variable/WriteBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
@@ -208,6 +211,33 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "in", type: "input", name: "In"},
             {id: "condition", type: "input", name: "Condition"},
             {id: "out", type: "output", name: "Out"}
+        ]
+    },
+    NumArray: {
+    name: "NumArray",
+        class: NumArrayBlock,
+        sockets: [
+            {id: "setName", type: "input", name: "SetName"},
+            {id: "setLength", type: "input", name: "SetLength"},
+            {id: "out", type: "output", name: "value"}
+        ]
+    },
+    ReadArray: {
+        name: "ReadArray",
+        class: ReadArrayBlock,
+        sockets: [
+            {id: "in1", type: "input", name: "ArrayName"},
+            {id: "in2", type: "input", name: "ArrayIndex"},
+            {id: "out", type: "output", name: "value"}
+        ]
+    },
+    WriteArray: {
+        name: "WriteArray",
+        class: WriteArrayBlock,
+        sockets: [
+            {id: "setName", type: "input", name: "ArrayName"},
+            {id: "setLength", type: "input", name: "ArrayLength"},
+            {id: "out", type: "output", name: "value"}
         ]
     }
 }
