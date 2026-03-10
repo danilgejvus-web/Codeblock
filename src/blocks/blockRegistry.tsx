@@ -1,9 +1,10 @@
 import type { BlockInfo } from "./BlockMetadata";
-import { DivBlock } from "./Arithmetic/DivBlock";
-import { ModBlock } from "./Arithmetic/ModBlock";
-import { MulBlock } from "./Arithmetic/MulBlock";
-import { SubBlock } from "./Arithmetic/SubBlock";
-import { SumBlock } from "./Arithmetic/SumBlock";
+import { DivBlock } from "./arithmetic/DivBlock";
+import { ExpressionBlock } from "./arithmetic/ExpressionBlock";
+import { ModBlock } from "./arithmetic/ModBlock";
+import { MulBlock } from "./arithmetic/MulBlock";
+import { SubBlock } from "./arithmetic/SubBlock";
+import { SumBlock } from "./arithmetic/SumBlock";
 import { AndBlock } from "./logic/AndBlock";
 import { EndIfBlock } from "./logic/EndIfBlock";
 import { EqualBlock } from "./logic/EqualBlock";
@@ -254,6 +255,13 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "setName", type: "input", name: "ArrayName"},
             {id: "setLength", type: "input", name: "ArrayLength"},
             {id: "out", type: "output", name: "value"}
+        ]
+    },
+    Expression: {
+        name: "Expression",
+        class: ExpressionBlock,
+        sockets: [
+            {id: "out", type: "output", name: "out"}
         ]
     }
 }
