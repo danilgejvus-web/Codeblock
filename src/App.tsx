@@ -4,6 +4,14 @@ import type { Block } from './blocks/BlockMetadata';
 import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
+import { NameBlock } from './blocks/variable/NameBlock';
+
+//TO DO
+//разбить блоки по категориям. Добавить категории Write and Read?
+//сделать блоки перетаскиваемыми по канве
+//добавить надписи к input and outout блоков
+//сделать блок для ввода имени
+//добавить удаление связей
 
 interface Point {
     x: number;
@@ -21,7 +29,7 @@ function App() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [connections, setConnections] = useState<Connection[]>([]);
     const [blocks, setBlocks] = useState<Block[]>([]);
-    const [draggedBlock, setDraggedBlock] = useState<{ type: string; name: string; blockType: string; } | null>(null);
+    const [draggedBlock, setDraggedBlock] = useState<{ type: string; name: string; blockType: string; instance?: any} | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [draggingConnection, setDraggingConnection] = useState<{ fromBlockId: string; fromSocketId: string; fromPoint: Point; } | null>(null);
     const [executionResult, setExecutionResult] = useState<string>('');
@@ -30,11 +38,15 @@ function App() {
     const [searchName, setSearchName] = useState('');
     const [hoveredSocket, setHoveredSocket] = useState<SocketPoint | null>(null);
     const [variables, setVariables] = useState<Record<string, any>>({});
+    const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState<string>('');
 
     const blockTypes = [
         { id: 'var', name: 'var' },
         { id: 'arithmetic', name: 'arithmetic' },
         { id: 'logic', name: 'logic' },
+        { id: 'loop', name: 'loop' },
+        { id: 'array', name: 'array' },
     ];
 
     const blockNames = Object.entries(blockRegistry).map(([id, info]) => ({
@@ -46,8 +58,10 @@ function App() {
 
     function getBlockType(blockName: string): string {
         if (['Num', 'Read', 'Write'].includes(blockName)) return 'var';
-        if (['Sum', 'Sub', 'Mul', 'Div'].includes(blockName)) return 'arithmetic';
-        if (['If', 'EndIf'].includes(blockName)) return 'logic';
+        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod'].includes(blockName)) return 'arithmetic';
+        if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'logic';
+        if (['While'].includes(blockName)) return 'loop';
+        if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'array';
         return 'var';
     }
 
@@ -187,9 +201,25 @@ function App() {
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
-                ctx.fillStyle = '#D4D4D4';
-                ctx.font = '14px Helvetica';
-                ctx.fillText(block.name, block.x + 10, block.y + 35);
+                if (block.type === 'Name') {
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = 'bold 14px Helvetica';
+                    ctx.fillText('VarName', block.x + 10, block.y + 25);
+                    
+                    ctx.font = '12px Helvetica';
+                    ctx.fillStyle = '#D6413E';
+                    const instance = block.instance as NameBlock;
+                    const name = instance ? instance.getName() : 'var';
+                    ctx.fillText(`"${name}"`, block.x + 10, block.y + 45);
+                    
+                    ctx.font = '8px Helvetica';
+                    ctx.fillStyle = '#868686';
+                    ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
+                } else {
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = '14px Helvetica';
+                    ctx.fillText(block.name, block.x + 10, block.y + 35);
+                }
 
                 const sockets = getBlockSockets(block);
                 sockets.forEach(socket => {
@@ -233,17 +263,53 @@ function App() {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-
     }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket]);
+
+    useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleDoubleClick = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        for (const block of blocks) {
+            if (block.type === 'Name' &&
+                x >= block.x && x <= block.x + 120 &&
+                y >= block.y && y <= block.y + 60) {
+                
+                const instance = block.instance as NameBlock;
+                setEditingBlockId(block.id);
+                setEditValue(instance.getName());
+                break;
+            }
+        }
+    };
+
+    canvas.addEventListener('dblclick', handleDoubleClick);
+    return () => canvas.removeEventListener('dblclick', handleDoubleClick);
+    }, [blocks]);
 
     const handleBlockClick = (block: typeof blockNames[0]) => {
         const blockInfo = blockRegistry[block.id as keyof typeof blockRegistry];
-        new blockInfo.class();
-        setDraggedBlock({
-            type: block.typeId,
-            name: block.name,
-            blockType: block.id
-        });
+
+        if (block.id === 'Name') {
+          const instance = new NameBlock('var');
+          setDraggedBlock({
+              type: block.typeId,
+              name: block.name,
+              blockType: block.id,
+              instance: instance
+          });
+        } else {
+            new blockInfo.class();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id
+            });
+        }
     };
 
 const handleCanvasClick = () => {
@@ -254,7 +320,13 @@ const handleCanvasClick = () => {
 
         if (x >= 0 && y >= 0 && x + 120 <= canvasRef.current!.width && y + 60 <= canvasRef.current!.height) {
             const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
-            const instance = new blockInfo.class();
+
+            let instance;
+            if (draggedBlock.blockType === 'Name' && draggedBlock.instance) {
+                instance = draggedBlock.instance;
+            } else {
+                instance = new blockInfo.class();
+            }
 
             setBlocks([...blocks, {
                 id: Date.now().toString(),
@@ -395,6 +467,73 @@ const handleCanvasClick = () => {
                         />
                     </div>
                 </div>
+
+                {editingBlockId && (
+                  <div style={{
+                      position: 'fixed',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: '#2D2D2D',
+                      padding: '20px',
+                      border: '2px solid #D6413E',
+                      borderRadius: '8px',
+                      zIndex: 1000,
+                  }}>
+                      <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
+                          Введите имя переменной
+                      </h3>
+                      <input
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          style={{
+                              background: '#1E1E1E',
+                              color: '#D4D4D4',
+                              border: '1px solid #D6413E',
+                              padding: '8px',
+                              width: '200px',
+                              marginBottom: '10px',
+                          }}
+                          autoFocus
+                      />
+                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                          <button
+                              onClick={() => {
+                                  const block = blocks.find(b => b.id === editingBlockId);
+                                  if (block && block.instance instanceof NameBlock) {
+                                      block.instance.setName(editValue);
+                                      setBlocks([...blocks]);
+                                  }
+                                  setEditingBlockId(null);
+                              }}
+                              style={{
+                                  background: '#D6413E',
+                                  color: 'white',
+                                  padding: '5px 15px',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                              }}
+                          >
+                              OK
+                          </button>
+                          <button
+                              onClick={() => setEditingBlockId(null)}
+                              style={{
+                                  background: '#D4D4D4',
+                                  color: '#1E1E1E',
+                                  padding: '5px 15px',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                              }}
+                          >
+                              Отмена
+                          </button>
+                      </div>
+                  </div>
+                )}
 
                 <div className="containerCreateBlock">
                     <div className="typeBlock">

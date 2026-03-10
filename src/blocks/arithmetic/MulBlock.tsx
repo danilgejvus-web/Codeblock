@@ -5,6 +5,6 @@ export class MulBlock implements ExecutableBlock {
         const a = inputs['in1'] || 0;
         const b = inputs['in2'] || 0;
 
-        return { out: a / b }
+        return { out: a * b }
     }
 }

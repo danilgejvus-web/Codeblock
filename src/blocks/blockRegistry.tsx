@@ -1,9 +1,9 @@
 import type { BlockInfo } from "./BlockMetadata";
-import { DivBlock } from "./arithmetic/DivBlock";
-import { ModBlock } from "./arithmetic/ModBlock";
-import { MulBlock } from "./arithmetic/MulBlock";
-import { SubBlock } from "./arithmetic/SubBlock";
-import { SumBlock } from "./arithmetic/SumBlock";
+import { DivBlock } from "./Arithmetic/DivBlock";
+import { ModBlock } from "./Arithmetic/ModBlock";
+import { MulBlock } from "./Arithmetic/MulBlock";
+import { SubBlock } from "./Arithmetic/SubBlock";
+import { SumBlock } from "./Arithmetic/SumBlock";
 import { AndBlock } from "./logic/AndBlock";
 import { EndIfBlock } from "./logic/EndIfBlock";
 import { EqualBlock } from "./logic/EqualBlock";
@@ -23,6 +23,7 @@ import { ReadArrayBlock } from "./variable/ReadArrayBlock";
 import { ReadBlock } from "./variable/ReadBlock";
 import { WriteArrayBlock } from "./variable/WriteArrayBlock";
 import { WriteBlock } from "./variable/WriteBlock";
+import { NameBlock } from "./variable/NameBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     Sum: {
@@ -94,6 +95,13 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "set", type: "input", name: "SetValue"},
             {id: "setName", type: "input", name: "VariableName"},
             {id: "out", type: "output", name: "value"}
+        ]
+    },
+    Name: {
+        name: "Name",
+        class: NameBlock,
+        sockets: [
+            { id: "value", type: "output", name: "Name" }
         ]
     },
     If: {
