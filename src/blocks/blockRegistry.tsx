@@ -24,7 +24,7 @@ import { ReadBlock } from "./variable/ReadBlock";
 import { WriteArrayBlock } from "./variable/WriteArrayBlock";
 import { WriteBlock } from "./variable/WriteBlock";
 import { NameBlock } from "./variable/NameBlock";
-import { NumberInputBlock } from "./variable/NumberInputBlock";
+import { NumberConstantBlock } from "./variable/NumberConstantBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     Sum: {
@@ -105,9 +105,9 @@ export const blockRegistry: Record<string, BlockInfo> = {
             { id: "value", type: "output", name: "Name" }
         ]
     },
-    NumberInput: {
-        name: "NumberInput",
-        class: NumberInputBlock,
+    NumberConstant: {
+        name: "NumberConstant",
+        class: NumberConstantBlock,
         sockets: [
             { id: "value", type: "output", name: "Value" }
         ]

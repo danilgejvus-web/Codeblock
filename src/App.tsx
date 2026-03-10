@@ -5,14 +5,22 @@ import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
 import { NameBlock } from './blocks/variable/NameBlock';
-import { NumberInputBlock } from './blocks/variable/NumberInputBlock';
+import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 
 //TO DO
 //разбить блоки по категориям. Добавить категории Write and Read?
 //сделать блоки перетаскиваемыми по канве
 //добавить надписи к input and outout блоков
-//сделать блок для ввода имени
 //добавить удаление связей
+//обработчик ошибок
+// избавиться от блока Read и сразу передавать значение
+// после первого запуска кнопка запуска перестаёт реагировать
+// список типов выступает, нужна прокрутка
+// сделать Num только для объявления переменной без присваивания?
+// почему-то не работает sum
+// визуальный баг при перетаскивании блока за контур соккета
+// *сделать добавление связи не перетаскиванием, а нажатием
+// *добавить возможность массового выделения блоков и их удаления
 
 interface Point {
     x: number;
@@ -41,13 +49,16 @@ function App() {
     const [variables, setVariables] = useState<Record<string, any>>({});
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<string>('');
+    const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+    const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+    const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
     const blockTypes = [
-        { id: 'var', name: 'var' },
-        { id: 'arithmetic', name: 'arithmetic' },
-        { id: 'logic', name: 'logic' },
-        { id: 'loop', name: 'loop' },
-        { id: 'array', name: 'array' },
+        { id: 'Var', name: 'Var' },
+        { id: 'Arithmetic', name: 'Arithmetic' },
+        { id: 'Logic', name: 'Logic' },
+        { id: 'Loop', name: 'Loop' },
+        { id: 'Array', name: 'Array' },
     ];
 
     const blockNames = Object.entries(blockRegistry).map(([id, info]) => ({
@@ -58,12 +69,12 @@ function App() {
     }));
 
     function getBlockType(blockName: string): string {
-        if (['Num', 'Read', 'Write', 'Name', 'NumberInput'].includes(blockName)) return 'var';
-        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod'].includes(blockName)) return 'arithmetic';
-        if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'logic';
-        if (['While'].includes(blockName)) return 'loop';
-        if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'array';
-        return 'var';
+        if (['Num', 'Read', 'Write', 'Name', 'NumberConstant'].includes(blockName)) return 'Var';
+        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod'].includes(blockName)) return 'Arithmetic';
+        if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'Logic';
+        if (['While'].includes(blockName)) return 'Loop';
+        if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
+        return 'Var';
     }
 
     const filteredBlockNames = blockNames
@@ -116,13 +127,25 @@ function App() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                setDraggedBlock(null);
-                setDraggingConnection(null);
+              setDraggedBlock(null);
+              setDraggingConnection(null);
+              setDraggedBlockId(null);
+              setSelectedBlockId(null);
+            }
+
+            if (e.key === 'Delete' && selectedBlockId) {
+              setConnections(prev => prev.filter(conn => 
+                  conn.fromBlockID !== selectedBlockId && conn.toBlockID !== selectedBlockId
+              ));
+              
+              setBlocks(prev => prev.filter(block => block.id !== selectedBlockId));
+              setSelectedBlockId(null);
             }
         };
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [selectedBlockId]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -190,15 +213,21 @@ function App() {
             }
 
             blocks.forEach(block => {
-                ctx.shadowColor = 'rgba(214, 65, 62, 0.3)';
-                ctx.shadowBlur = 8;
-                ctx.shadowOffsetY = 2;
+                if (block.id === selectedBlockId) {
+                    ctx.shadowColor = '#D6413E';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetY = 0;
+                } else {
+                    ctx.shadowColor = 'rgba(214, 65, 62, 0.3)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetY = 2;
+                }
 
                 ctx.fillStyle = '#2D2D2D';
                 ctx.fillRect(block.x, block.y, 120, 60);
 
                 ctx.shadowBlur = 0;
-                ctx.strokeStyle = '#D6413E';
+                ctx.strokeStyle = block.id === selectedBlockId ? '#FFC107' : '#D6413E';;
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
@@ -216,14 +245,14 @@ function App() {
                     ctx.font = '8px Helvetica';
                     ctx.fillStyle = '#868686';
                     ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
-                } else if (block.type === 'NumberInput') {
+                } else if (block.type === 'NumberConstant') {
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = 'bold 14px Helvetica';
                     ctx.fillText('Number', block.x + 10, block.y + 25);
                     
                     ctx.font = '12px Helvetica';
                     ctx.fillStyle = '#D6413E';
-                    const numInstance = block.instance as NumberInputBlock;
+                    const numInstance = block.instance as NumberConstantBlock;
                     const value = numInstance ? numInstance.getValue() : 0;
                     ctx.fillText(`${value}`, block.x + 10, block.y + 45);
                     
@@ -278,34 +307,37 @@ function App() {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket]);
+    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockId]);
 
     useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const handleDoubleClick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+      const handleDoubleClick = (e: MouseEvent) => {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
 
-        for (const block of blocks) {
-          if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
-            if (block.type === 'Name') {
-                const instance = block.instance as NameBlock;
-                setEditingBlockId(block.id);
-                setEditValue(instance.getName());
-                break;
-            }
+          for (const block of blocks) {
+            if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
 
-            if (block.type === 'NumberInput') {
-                const instance = block.instance as NumberInputBlock;
-                setEditingBlockId(block.id);
-                setEditValue(instance.getValue().toString());
-                break;
+              setSelectedBlockId(block.id);
+
+              if (block.type === 'Name') {
+                  const instance = block.instance as NameBlock;
+                  setEditingBlockId(block.id);
+                  setEditValue(instance.getName());
+                  break;
+              }
+
+              if (block.type === 'NumberConstant') {
+                  const instance = block.instance as NumberConstantBlock;
+                  setEditingBlockId(block.id);
+                  setEditValue(instance.getValue().toString());
+                  break;
+              }
             }
           }
-        }
     };
 
     canvas.addEventListener('dblclick', handleDoubleClick);
@@ -323,9 +355,9 @@ function App() {
               blockType: block.id,
               instance: instance
           });
-        } else if (block.id === 'NumberInput') {
-          console.log('Creating NumberInputBlock');
-          const instance = new NumberInputBlock(0);
+        } else if (block.id === 'NumberConstant') {
+          console.log('Creating NumberConstantBlock');
+          const instance = new NumberConstantBlock(0);
           setDraggedBlock({
               type: block.typeId,
               name: block.name,
@@ -352,7 +384,7 @@ const handleCanvasClick = () => {
             const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
 
             let instance;
-            if ((draggedBlock.blockType === 'Name' || draggedBlock.blockType === 'NumberInput')
+            if ((draggedBlock.blockType === 'Name' || draggedBlock.blockType === 'NumberConstant')
                 && draggedBlock.instance) {
                 instance = draggedBlock.instance;
             } else {
@@ -383,6 +415,28 @@ const handleCanvasClick = () => {
                 fromPoint: socket.position
             });
         }
+
+        let blockFound = false;
+        for (const block of blocks) {
+          if (mousePos.x >= block.x && mousePos.x <= block.x + 120 &&
+              mousePos.y >= block.y && mousePos.y <= block.y + 60) {
+              
+              setSelectedBlockId(block.id);
+              
+              setDragOffset({
+                  x: mousePos.x - block.x,
+                  y: mousePos.y - block.y
+              });
+              
+              setDraggedBlockId(block.id);
+              blockFound = true;
+              break;
+          }
+        }
+
+        if (!blockFound) {
+          setSelectedBlockId(null);
+        }
     };
 
     const handleCanvasMouseUp = (e: React.MouseEvent) => {
@@ -412,6 +466,43 @@ const handleCanvasClick = () => {
 
             setDraggingConnection(null);
         }
+
+        if (draggedBlockId) {
+          setDraggedBlockId(null);
+          setDragOffset(null);
+        }
+    };
+
+    const handleCanvasMouseMove = (e: React.MouseEvent) => {
+      if (!canvasRef.current) return;
+      
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      setMousePos({ x, y });
+      
+      if (draggedBlockId && dragOffset) {
+          let newX = x - dragOffset.x;
+          let newY = y - dragOffset.y;
+          
+          newX = Math.round(newX / 20) * 20;
+          newY = Math.round(newY / 20) * 20;
+          
+          newX = Math.max(0, Math.min(newX, canvasRef.current.width - 120));
+          newY = Math.max(0, Math.min(newY, canvasRef.current.height - 60));
+          
+          setBlocks(prevBlocks => 
+              prevBlocks.map(block => 
+                  block.id === draggedBlockId 
+                      ? { ...block, x: newX, y: newY }
+                      : block
+              )
+          );
+      }
+      
+      const socket = findSocketAtPosition(x, y);
+      setHoveredSocket(socket);
     };
 
     const handleRunCode = () => {
@@ -494,7 +585,13 @@ const handleCanvasClick = () => {
                             className="canvas"
                             onClick={handleCanvasClick}
                             onMouseDown={handleCanvasMouseDown}
+                            onMouseMove={handleCanvasMouseMove}
                             onMouseUp={handleCanvasMouseUp}
+                            onMouseLeave={() => {
+                                setDraggedBlockId(null);
+                                setDragOffset(null);
+                                setDraggingConnection(null);
+                            }}
                         />
                     </div>
                 </div>
@@ -512,12 +609,12 @@ const handleCanvasClick = () => {
                     zIndex: 1000,
                 }}>
                     <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
-                        {blocks.find(b => b.id === editingBlockId)?.type === 'NumberInput' 
+                        {blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant' 
                             ? 'Введите число' 
                             : 'Введите имя переменной'}
                     </h3>
                     <input
-                        type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberInput' 
+                        type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant' 
                             ? 'number' 
                             : 'text'}
                         value={editValue}
@@ -539,7 +636,7 @@ const handleCanvasClick = () => {
                                 if (block) {
                                     if (block.instance instanceof NameBlock) {
                                         block.instance.setName(editValue);
-                                    } else if (block.instance instanceof NumberInputBlock) {
+                                    } else if (block.instance instanceof NumberConstantBlock) {
                                         const numValue = parseFloat(editValue) || 0;
                                         block.instance.setValue(numValue);
                                     }

@@ -1,6 +1,6 @@
 import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
-export class NumberInputBlock implements ExecutableBlock {
+export class NumberConstantBlock implements ExecutableBlock {
     private numberValue: number;
 
     constructor(initValue: number = 0) {
