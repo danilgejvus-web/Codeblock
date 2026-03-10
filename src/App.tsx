@@ -5,6 +5,7 @@ import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
 import { NameBlock } from './blocks/variable/NameBlock';
+import { NumberInputBlock } from './blocks/variable/NumberInputBlock';
 
 //TO DO
 //разбить блоки по категориям. Добавить категории Write and Read?
@@ -57,7 +58,7 @@ function App() {
     }));
 
     function getBlockType(blockName: string): string {
-        if (['Num', 'Read', 'Write'].includes(blockName)) return 'var';
+        if (['Num', 'Read', 'Write', 'Name', 'NumberInput'].includes(blockName)) return 'var';
         if (['Sum', 'Sub', 'Mul', 'Div', 'Mod'].includes(blockName)) return 'arithmetic';
         if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'logic';
         if (['While'].includes(blockName)) return 'loop';
@@ -215,6 +216,20 @@ function App() {
                     ctx.font = '8px Helvetica';
                     ctx.fillStyle = '#868686';
                     ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
+                } else if (block.type === 'NumberInput') {
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = 'bold 14px Helvetica';
+                    ctx.fillText('Number', block.x + 10, block.y + 25);
+                    
+                    ctx.font = '12px Helvetica';
+                    ctx.fillStyle = '#D6413E';
+                    const numInstance = block.instance as NumberInputBlock;
+                    const value = numInstance ? numInstance.getValue() : 0;
+                    ctx.fillText(`${value}`, block.x + 10, block.y + 45);
+                    
+                    ctx.font = '8px Helvetica';
+                    ctx.fillStyle = '#868686';
+                    ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
                 } else {
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = '14px Helvetica';
@@ -275,15 +290,21 @@ function App() {
         const y = e.clientY - rect.top;
 
         for (const block of blocks) {
-            if (block.type === 'Name' &&
-                x >= block.x && x <= block.x + 120 &&
-                y >= block.y && y <= block.y + 60) {
-                
+          if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
+            if (block.type === 'Name') {
                 const instance = block.instance as NameBlock;
                 setEditingBlockId(block.id);
                 setEditValue(instance.getName());
                 break;
             }
+
+            if (block.type === 'NumberInput') {
+                const instance = block.instance as NumberInputBlock;
+                setEditingBlockId(block.id);
+                setEditValue(instance.getValue().toString());
+                break;
+            }
+          }
         }
     };
 
@@ -302,6 +323,15 @@ function App() {
               blockType: block.id,
               instance: instance
           });
+        } else if (block.id === 'NumberInput') {
+          console.log('Creating NumberInputBlock');
+          const instance = new NumberInputBlock(0);
+          setDraggedBlock({
+              type: block.typeId,
+              name: block.name,
+              blockType: block.id,
+              instance: instance
+          });
         } else {
             new blockInfo.class();
             setDraggedBlock({
@@ -310,7 +340,7 @@ function App() {
                 blockType: block.id
             });
         }
-    };
+      };
 
 const handleCanvasClick = () => {
         if (!draggedBlock) return;
@@ -322,7 +352,8 @@ const handleCanvasClick = () => {
             const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
 
             let instance;
-            if (draggedBlock.blockType === 'Name' && draggedBlock.instance) {
+            if ((draggedBlock.blockType === 'Name' || draggedBlock.blockType === 'NumberInput')
+                && draggedBlock.instance) {
                 instance = draggedBlock.instance;
             } else {
                 instance = new blockInfo.class();
@@ -469,70 +500,79 @@ const handleCanvasClick = () => {
                 </div>
 
                 {editingBlockId && (
-                  <div style={{
-                      position: 'fixed',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      background: '#2D2D2D',
-                      padding: '20px',
-                      border: '2px solid #D6413E',
-                      borderRadius: '8px',
-                      zIndex: 1000,
-                  }}>
-                      <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
-                          Введите имя переменной
-                      </h3>
-                      <input
-                          type="text"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          style={{
-                              background: '#1E1E1E',
-                              color: '#D4D4D4',
-                              border: '1px solid #D6413E',
-                              padding: '8px',
-                              width: '200px',
-                              marginBottom: '10px',
-                          }}
-                          autoFocus
-                      />
-                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                          <button
-                              onClick={() => {
-                                  const block = blocks.find(b => b.id === editingBlockId);
-                                  if (block && block.instance instanceof NameBlock) {
-                                      block.instance.setName(editValue);
-                                      setBlocks([...blocks]);
-                                  }
-                                  setEditingBlockId(null);
-                              }}
-                              style={{
-                                  background: '#D6413E',
-                                  color: 'white',
-                                  padding: '5px 15px',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                              }}
-                          >
-                              OK
-                          </button>
-                          <button
-                              onClick={() => setEditingBlockId(null)}
-                              style={{
-                                  background: '#D4D4D4',
-                                  color: '#1E1E1E',
-                                  padding: '5px 15px',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                              }}
-                          >
-                              Отмена
-                          </button>
-                      </div>
-                  </div>
+                <div style={{
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: '#2D2D2D',
+                    padding: '20px',
+                    border: '2px solid #D6413E',
+                    borderRadius: '8px',
+                    zIndex: 1000,
+                }}>
+                    <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
+                        {blocks.find(b => b.id === editingBlockId)?.type === 'NumberInput' 
+                            ? 'Введите число' 
+                            : 'Введите имя переменной'}
+                    </h3>
+                    <input
+                        type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberInput' 
+                            ? 'number' 
+                            : 'text'}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        style={{
+                            background: '#1E1E1E',
+                            color: '#D4D4D4',
+                            border: '1px solid #D6413E',
+                            padding: '8px',
+                            width: '200px',
+                            marginBottom: '10px',
+                        }}
+                        autoFocus
+                    />
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={() => {
+                                const block = blocks.find(b => b.id === editingBlockId);
+                                if (block) {
+                                    if (block.instance instanceof NameBlock) {
+                                        block.instance.setName(editValue);
+                                    } else if (block.instance instanceof NumberInputBlock) {
+                                        const numValue = parseFloat(editValue) || 0;
+                                        block.instance.setValue(numValue);
+                                    }
+                                    setBlocks([...blocks]);
+                                }
+                                setEditingBlockId(null);
+                            }}
+                            style={{
+                                background: '#D6413E',
+                                color: 'white',
+                                padding: '5px 15px',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            OK
+                        </button>
+                        <button
+                            onClick={() => setEditingBlockId(null)}
+                            style={{
+                                background: '#D4D4D4',
+                                color: '#1E1E1E',
+                                padding: '5px 15px',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Отмена
+                        </button>
+                    </div>
+                </div>
                 )}
 
                 <div className="containerCreateBlock">
