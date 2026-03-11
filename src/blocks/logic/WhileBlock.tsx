@@ -22,7 +22,7 @@ export class WhileBlock implements ExecutableBlock {
             if (nextState !== undefined) {
                 currentState = nextState;
             }
-            this.execute(inputs, context);
+            this.execute({...inputs, ...currentState}, {...context, ...subContext});
         }
 
         return { outputs: currentState };
