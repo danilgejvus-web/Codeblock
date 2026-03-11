@@ -65,6 +65,8 @@ h1 {
     border: 2px solid #D6413E;
     border-top: none;
     border-left: none;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 
@@ -82,6 +84,14 @@ h1 {
 .nameBlockUL{
     display: flex;
     flex-direction: column;
+}
+.typeBlockUl {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
 }
 ul.nameBlockUL li{
     border: 2px solid #D6413E;
@@ -104,6 +114,16 @@ ul.nameBlockUL li{
 }
 ul.nameBlockUL .searchForm{
     margin-top: 1.5px;
+}
+
+.typeBlockUl .searchForm {
+    position: sticky;
+    top: 0;
+    background: #1E1E1E;
+    z-index: 1;
+    margin: 0;
+    height: auto;
+    border-bottom: 2px solid #D6413E;
 }
 
 .searchForm__txt{
@@ -162,6 +182,7 @@ ul.typeBlockUl li{
     border-left: none;
     border-right: none;
     background: none;
+    flex-shrink: 0;
 }
 ul.typeBlockUl li:last-child{
     border: none;
