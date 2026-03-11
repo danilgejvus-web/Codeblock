@@ -471,25 +471,21 @@ const handleCanvasClick = () => {
             if (targetSocket && targetSocket.type === 'input' &&
                 targetSocket.blockId !== draggingConnection.fromBlockId) {
 
-                const existingConnection = connections.find(conn =>
-                    conn.toBlockID === targetSocket.blockId &&
-                    conn.toSocketID === targetSocket.socketId
+                const newConnection: Connection = {
+                    id: `conn_${Date.now()}_${Math.random()}`,
+                    fromBlockID: draggingConnection.fromBlockId,
+                    fromSocketID: draggingConnection.fromSocketId,
+                    toBlockID: targetSocket.blockId,
+                    toSocketID: targetSocket.socketId
+                };
+
+                const filteredConnections = connections.filter(conn => 
+                    !(conn.toBlockID === targetSocket.blockId && 
+                    conn.toSocketID === targetSocket.socketId)
                 );
 
-                if (existingConnection) {
-                    console.log('Удаляем существующее соединение:', existingConnection);
-                    setConnections(prev => prev.filter(conn => conn.id !== existingConnection.id));
-                } else {
-                    const newConnection: Connection = {
-                        id: `conn_${Date.now()}_${Math.random()}`,
-                        fromBlockID: draggingConnection.fromBlockId,
-                        fromSocketID: draggingConnection.fromSocketId,
-                        toBlockID: targetSocket.blockId,
-                        toSocketID: targetSocket.socketId
-                    };
-                    console.log('Создаем новое соединение:', newConnection);
-                    setConnections([...connections, newConnection]);
-                }
+                console.log('Заменяем соединение на:', newConnection);
+                setConnections([...filteredConnections, newConnection]);
             }
 
             setDraggingConnection(null);
