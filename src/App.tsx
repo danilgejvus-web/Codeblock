@@ -231,6 +231,7 @@ function App() {
                 ctx.fillRect(block.x, block.y, 120, 60);
 
                 ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
                 ctx.strokeStyle = block.id === selectedBlockId ? '#FFC107' : '#D6413E';;
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
@@ -305,16 +306,15 @@ function App() {
 
                     const textWidth = ctx.measureText(displayName).width;
 
+                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = 'transparent';
+
                     if (socket.type === 'input') {
                         const textX = socket.position.x - textWidth - 8;
                         ctx.fillText(displayName, textX, socket.position.y + 4);
                     } else {
                         ctx.fillText(displayName, socket.position.x + 8, socket.position.y + 4);
                     }
-                    
-                    
-
-                    ctx.shadowBlur = 0;
                 });
             });
 
