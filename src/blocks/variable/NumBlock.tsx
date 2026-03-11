@@ -13,6 +13,6 @@ export class NumBlock implements ExecutableBlock {
             context.setVariable(inputs['setName'], this.storage);
         }
 
-        return { value: this.storage }
+        return { out: this.storage }
     }
 }

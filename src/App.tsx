@@ -13,7 +13,7 @@ import { validateProgram, type BlockError, type ValidationResult } from './Valid
 // !обработчик ошибок
 // !сделать Num только для объявления переменной без присваивания?
 // сделать блок declarNum
-// -почему-то не работает sum
+// +почему-то не работает sum / теперь работает
 // *добавить возможность массового выделения блоков и их удаления
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
 // *избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
@@ -57,6 +57,10 @@ function App() {
     const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<ValidationResult>({ errors: [], warnings: [] });
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [selectionStart, setSelectionStart] = useState<Point | null>(null);
+    const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
+    const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
 
     const blockTypes = [
         { id: 'Var', name: 'Var' },
@@ -146,22 +150,24 @@ function App() {
               setDraggedBlock(null);
               setDraggingConnection(null);
               setDraggedBlockId(null);
-              setSelectedBlockId(null);
+              setSelectedBlockIds(new Set());
+              setIsSelecting(false);
             }
 
-            if (e.key === 'Delete' && selectedBlockId) {
-              setConnections(prev => prev.filter(conn => 
-                  conn.fromBlockID !== selectedBlockId && conn.toBlockID !== selectedBlockId
+            if (e.key === 'Delete' && selectedBlockIds.size > 0) {
+               setConnections(prev => prev.filter(conn => 
+                !selectedBlockIds.has(conn.fromBlockID) && 
+                !selectedBlockIds.has(conn.toBlockID)
               ));
               
-              setBlocks(prev => prev.filter(block => block.id !== selectedBlockId));
-              setSelectedBlockId(null);
+              setBlocks(prev => prev.filter(block => !selectedBlockIds.has(block.id)));
+            setSelectedBlockIds(new Set());
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedBlockId]);
+    }, [selectedBlockIds]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -227,9 +233,22 @@ function App() {
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
-
+            if (isSelecting && selectionStart && selectionEnd) {
+                ctx.strokeStyle = '#D6413E';
+                ctx.fillStyle = 'rgba(214, 65, 62, 0.1)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                
+                const width = selectionEnd.x - selectionStart.x;
+                const height = selectionEnd.y - selectionStart.y;
+                
+                ctx.strokeRect(selectionStart.x, selectionStart.y, width, height);
+                ctx.fillRect(selectionStart.x, selectionStart.y, width, height);
+                
+                ctx.setLineDash([]);
+            }
             blocks.forEach(block => {
-                if (block.id === selectedBlockId) {
+                if (selectedBlockIds.has(block.id)) {
                     ctx.shadowColor = '#D6413E';
                     ctx.shadowBlur = 15;
                     ctx.shadowOffsetY = 0;
@@ -523,26 +542,75 @@ const handleCanvasClick = () => {
         for (const block of blocks) {
           if (mousePos.x >= block.x && mousePos.x <= block.x + 120 &&
               mousePos.y >= block.y && mousePos.y <= block.y + 60) {
-              
-              setSelectedBlockId(block.id);
+                if (e.shiftKey) {
+                    setSelectedBlockIds(prev => {
+                        const newSet = new Set(prev);
+                        if (newSet.has(block.id)) {
+                            newSet.delete(block.id);
+                        } else {
+                            newSet.add(block.id);
+                        }
+                        return newSet;
+                    });
+                } 
+                else {
+                    if (!selectedBlockIds.has(block.id)) {
+                        setSelectedBlockIds(new Set([block.id]));
+                }
+                }
               
               setDragOffset({
                   x: mousePos.x - block.x,
                   y: mousePos.y - block.y
               });
               
-              setDraggedBlockId(block.id);
+              setDraggedBlockId(block.id);;
               blockFound = true;
               break;
           }
         }
-
         if (!blockFound) {
-          setSelectedBlockId(null);
+            if (!e.shiftKey) {
+                setSelectedBlockIds(new Set());
+            }
+            setIsSelecting(true);
+            setSelectionStart({ x: mousePos.x, y: mousePos.y });
+            setSelectionEnd({ x: mousePos.x, y: mousePos.y });
         }
     };
 
     const handleCanvasMouseUp = (e: React.MouseEvent) => {
+
+            if (isSelecting && selectionStart && selectionEnd) {
+                const rect = {
+                    left: Math.min(selectionStart.x, selectionEnd.x),
+                    right: Math.max(selectionStart.x, selectionEnd.x),
+                    top: Math.min(selectionStart.y, selectionEnd.y),
+                    bottom: Math.max(selectionStart.y, selectionEnd.y)
+                };
+            
+            const blocksInRect = blocks.filter(block => {
+                const blockLeft = block.x;
+                const blockRight = block.x + 120;
+                const blockTop = block.y;
+                const blockBottom = block.y + 60;
+                
+                return !(blockRight < rect.left || 
+                    blockLeft > rect.right || 
+                    blockBottom < rect.top || 
+                    blockTop > rect.bottom);
+            });
+            
+            setSelectedBlockIds(prev => {
+                const newSet = new Set(prev);
+                blocksInRect.forEach(block => newSet.add(block.id));
+                return newSet;
+            });
+        }
+        
+        setIsSelecting(false);
+        setSelectionStart(null);
+        setSelectionEnd(null);
         if (draggingConnection) {
             const targetSocket = hoveredSocket;
 
@@ -583,7 +651,10 @@ const handleCanvasClick = () => {
       const y = e.clientY - rect.top;
       
       setMousePos({ x, y });
-      
+
+      if (isSelecting && selectionStart) {
+        setSelectionEnd({ x, y });
+    }
       if (draggedBlockId && dragOffset) {
           let newX = x - dragOffset.x;
           let newY = y - dragOffset.y;
@@ -593,15 +664,20 @@ const handleCanvasClick = () => {
           
           newX = Math.max(0, Math.min(newX, canvasRef.current.width - 120));
           newY = Math.max(0, Math.min(newY, canvasRef.current.height - 60));
-          
-          setBlocks(prevBlocks => 
-              prevBlocks.map(block => 
-                  block.id === draggedBlockId 
-                      ? { ...block, x: newX, y: newY }
-                      : block
-              )
-          );
-      }
+          const currentBlock = blocks.find(b => b.id === draggedBlockId);
+          if (currentBlock) {
+            const dx = newX - currentBlock.x;
+            const dy = newY - currentBlock.y;
+
+         setBlocks(prevBlocks => 
+            prevBlocks.map(block => 
+                selectedBlockIds.has(block.id) || block.id === draggedBlockId
+                    ? { ...block, x: block.x + dx, y: block.y + dy }
+                    : block
+                )
+            );
+        }
+    }
       
       const socket = findSocketAtPosition(x, y);
       setHoveredSocket(socket);
@@ -693,6 +769,9 @@ const handleCanvasClick = () => {
                                 setDraggedBlockId(null);
                                 setDragOffset(null);
                                 setDraggingConnection(null);
+                                setIsSelecting(false);
+                                setSelectionStart(null);
+                                setSelectionEnd(null);
                             }}
                         />
                     </div>
@@ -721,6 +800,21 @@ const handleCanvasClick = () => {
                             : 'text'}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
+                         onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                const block = blocks.find(b => b.id === editingBlockId);
+                                if (block) {
+                                    if (block.instance instanceof NameBlock) {
+                                        block.instance.setName(editValue);
+                                    } else if (block.instance instanceof NumberConstantBlock) {
+                                        const numValue = parseFloat(editValue) || 0;
+                                        block.instance.setValue(numValue);
+                                    }
+                                    setBlocks([...blocks]);
+                                }
+                                setEditingBlockId(null);
+                            }
+                        }}
                         style={{
                             background: '#1E1E1E',
                             color: '#D4D4D4',
