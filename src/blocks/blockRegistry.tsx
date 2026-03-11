@@ -26,6 +26,7 @@ import { WriteArrayBlock } from "./variable/WriteArrayBlock";
 import { WriteBlock } from "./variable/WriteBlock";
 import { NameBlock } from "./variable/NameBlock";
 import { NumberConstantBlock } from "./variable/NumberConstantBlock";
+import { StringBlock } from "./variable/StringBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     Sum: {
@@ -262,6 +263,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
         class: ExpressionBlock,
         sockets: [
             {id: "out", type: "output", name: "out"}
+        ]
+    },
+    Str: {
+        name: "String",
+        class: StringBlock,
+        sockets: [
+            {id: "set", type: "input", name: "SetValue"},
+            {id: "setName", type: "input", name: "SetName"},
+            {id: "out", type: "output", name: "value"}
         ]
     }
 }
