@@ -16,7 +16,6 @@ import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 // после первого запуска кнопка запуска перестаёт реагировать
 // сделать Num только для объявления переменной без присваивания?
 // почему-то не работает sum
-// визуальный баг при перетаскивании блока за контур соккета
 // *сделать добавление связи не перетаскиванием, а нажатием
 // *добавить возможность массового выделения блоков и их удаления
 
@@ -68,7 +67,7 @@ function App() {
 
     function getBlockType(blockName: string): string {
         if (['Num', 'Read', 'Write', 'Name', 'NumberConstant'].includes(blockName)) return 'Var';
-        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod'].includes(blockName)) return 'Arithmetic';
+        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Greater'].includes(blockName)) return 'Arithmetic';
         if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'Logic';
         if (['While'].includes(blockName)) return 'Loop';
         if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
@@ -266,9 +265,24 @@ function App() {
                 const sockets = getBlockSockets(block);
                 sockets.forEach(socket => {
                     ctx.beginPath();
-                    ctx.fillStyle = socket.type === 'input' ? '#4CAF50' : '#2196F3';
+
+                    if (socket.type === 'input') {
+                        const hasConnection = connections.some(conn => 
+                            conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
+                        );
+                        
+                        if (hasConnection) {
+                            ctx.fillStyle = '#4ba14e';
+                        } else {
+                            ctx.fillStyle = '#8d9c8d';
+                        }
+                    } else {
+                        ctx.fillStyle = '#2587d8';
+                    }
+
                     if (hoveredSocket?.blockId === socket.blockId &&
                         hoveredSocket?.socketId === socket.socketId) {
+                        
                         ctx.fillStyle = '#FFC107';
                     }
                     ctx.arc(socket.position.x, socket.position.y, 5, 0, 2 * Math.PI);
@@ -412,6 +426,19 @@ const handleCanvasClick = () => {
                 fromSocketId: socket.socketId,
                 fromPoint: socket.position
             });
+            return;
+        }
+
+        if (socket && socket.type === 'input') {
+            const connectionToRemove = connections.find(conn => 
+                conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
+            );
+            
+            if (connectionToRemove) {
+                console.log('Удаляем соединение:', connectionToRemove);
+                setConnections(prev => prev.filter(conn => conn.id !== connectionToRemove.id));
+            }
+            return;
         }
 
         let blockFound = false;
@@ -444,12 +471,15 @@ const handleCanvasClick = () => {
             if (targetSocket && targetSocket.type === 'input' &&
                 targetSocket.blockId !== draggingConnection.fromBlockId) {
 
-                const exists = connections.some(conn =>
+                const existingConnection = connections.find(conn =>
                     conn.toBlockID === targetSocket.blockId &&
                     conn.toSocketID === targetSocket.socketId
                 );
 
-                if (!exists) {
+                if (existingConnection) {
+                    console.log('Удаляем существующее соединение:', existingConnection);
+                    setConnections(prev => prev.filter(conn => conn.id !== existingConnection.id));
+                } else {
                     const newConnection: Connection = {
                         id: `conn_${Date.now()}_${Math.random()}`,
                         fromBlockID: draggingConnection.fromBlockId,
@@ -457,7 +487,7 @@ const handleCanvasClick = () => {
                         toBlockID: targetSocket.blockId,
                         toSocketID: targetSocket.socketId
                     };
-
+                    console.log('Создаем новое соединение:', newConnection);
                     setConnections([...connections, newConnection]);
                 }
             }
