@@ -10,7 +10,6 @@ import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 //TO DO
 //разбить блоки по категориям. Добавить категории Write and Read?
 //добавить надписи к input and outout блоков
-//добавить удаление связей
 //обработчик ошибок
 // избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
 // после первого запуска кнопка запуска перестаёт реагировать
@@ -18,6 +17,11 @@ import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 // почему-то не работает sum
 // *сделать добавление связи не перетаскиванием, а нажатием
 // *добавить возможность массового выделения блоков и их удаления
+// сделать блок declarNum
+// добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
+// а ещё я предлагаю VarName и NumberConstant переименовать в String и Number
+// и вынести их в отдельный от Var блок, в тип constant
+// можно ещё блок вывода сделать, чтобы потом не весь результат выводить
 
 interface Point {
     x: number;
@@ -28,6 +32,7 @@ interface SocketPoint {
     blockId: string;
     socketId: string;
     type: 'input' | 'output';
+    name?: string;
     position: Point;
 }
 
@@ -81,10 +86,12 @@ function App() {
     const getBlockSockets = (block: Block): SocketPoint[] => {
         const blockInfo = blockRegistry[block.type as keyof typeof blockRegistry];
         if (!blockInfo) return [];
+
         return blockInfo.sockets.map(socket => ({
             blockId: block.id,
             socketId: socket.id,
             type: socket.type,
+            name: socket.name || socket.id,
             position: {
                 x: block.x + (socket.type === 'input' ? 0 : 120),
                 y: block.y + 20 + (blockInfo.sockets.filter(s => s.type === socket.type).indexOf(socket) * 20)
@@ -290,6 +297,24 @@ function App() {
                     ctx.strokeStyle = '#FFFFFF';
                     ctx.lineWidth = 2;
                     ctx.stroke();
+
+                    let displayName = socket.name || '';
+                    if (displayName.length > 10) {
+                        displayName = displayName.substring(0, 8) + '..';
+                    }
+
+                    const textWidth = ctx.measureText(displayName).width;
+
+                    if (socket.type === 'input') {
+                        const textX = socket.position.x - textWidth - 8;
+                        ctx.fillText(displayName, textX, socket.position.y + 4);
+                    } else {
+                        ctx.fillText(displayName, socket.position.x + 8, socket.position.y + 4);
+                    }
+                    
+                    
+
+                    ctx.shadowBlur = 0;
                 });
             });
 
