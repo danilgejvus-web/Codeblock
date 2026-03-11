@@ -8,20 +8,22 @@ import { NameBlock } from './blocks/variable/NameBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 
 //TO DO
-//разбить блоки по категориям. Добавить категории Write and Read?
-//добавить надписи к input and outout блоков
-//обработчик ошибок
-// избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
-// после первого запуска кнопка запуска перестаёт реагировать
-// сделать Num только для объявления переменной без присваивания?
-// почему-то не работает sum
-// *сделать добавление связи не перетаскиванием, а нажатием
-// *добавить возможность массового выделения блоков и их удаления
+// !разбить блоки по категориям. Добавить категории Write and Read?
+// !обработчик ошибок
+// -после первого запуска кнопка запуска перестаёт реагировать
+// !сделать Num только для объявления переменной без присваивания?
 // сделать блок declarNum
-// добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
+// -почему-то не работает sum
+// *добавить возможность массового выделения блоков и их удаления
+// *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
+// *избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
 // а ещё я предлагаю VarName и NumberConstant переименовать в String и Number
 // и вынести их в отдельный от Var блок, в тип constant
-// можно ещё блок вывода сделать, чтобы потом не весь результат выводить
+// *можно ещё блок вывода сделать, чтобы потом не весь результат выводить
+// сделать название блока посередине
+// -баг у текста output в блоке NumConstant: маленький текст
+// сделать канву подвижной
+// сделать надписи у призраков по центру
 
 interface Point {
     x: number;
@@ -237,37 +239,53 @@ function App() {
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
                 if (block.type === 'Name') {
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = 'bold 14px Helvetica';
-                    ctx.fillText('VarName', block.x + 10, block.y + 25);
+                    ctx.fillText('VarName', block.x + 60, block.y + 15);
                     
                     ctx.font = '12px Helvetica';
                     ctx.fillStyle = '#D6413E';
                     const instance = block.instance as NameBlock;
                     const name = instance ? instance.getName() : 'var';
-                    ctx.fillText(`"${name}"`, block.x + 10, block.y + 45);
-                    
+                    ctx.fillText(`"${name}"`, block.x + 60, block.y + 35);
+
                     ctx.font = '8px Helvetica';
                     ctx.fillStyle = '#868686';
-                    ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
+                    ctx.fillText('double-click to edit', block.x + 60, block.y + 50);
+
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
                 } else if (block.type === 'NumberConstant') {
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = 'bold 14px Helvetica';
-                    ctx.fillText('Number', block.x + 10, block.y + 25);
+                    ctx.fillText('Number', block.x + 60, block.y + 15);
                     
                     ctx.font = '12px Helvetica';
                     ctx.fillStyle = '#D6413E';
                     const numInstance = block.instance as NumberConstantBlock;
                     const value = numInstance ? numInstance.getValue() : 0;
-                    ctx.fillText(`${value}`, block.x + 10, block.y + 45);
+                    ctx.fillText(`${value}`, block.x + 60, block.y + 35);
                     
                     ctx.font = '8px Helvetica';
                     ctx.fillStyle = '#868686';
-                    ctx.fillText('double-click to edit', block.x + 10, block.y + 55);
+                    ctx.fillText('double-click to edit', block.x + 60, block.y + 50);
+                    
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
                 } else {
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = '14px Helvetica';
-                    ctx.fillText(block.name, block.x + 10, block.y + 35);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(block.name, block.x + 60, block.y + 30);
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
                 }
 
                 const sockets = getBlockSockets(block);
