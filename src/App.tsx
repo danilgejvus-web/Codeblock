@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import type { Block } from './blocks/BlockMetadata';
 import type { Connection } from './blocks/ExecutableBlock';
@@ -6,11 +6,11 @@ import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
 import { NameBlock } from './blocks/variable/NameBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
+import { validateProgram, type BlockError, type ValidationResult } from './Validation';
 
 //TO DO
 // !разбить блоки по категориям. Добавить категории Write and Read?
 // !обработчик ошибок
-// -после первого запуска кнопка запуска перестаёт реагировать
 // !сделать Num только для объявления переменной без присваивания?
 // сделать блок declarNum
 // -почему-то не работает sum
@@ -56,6 +56,7 @@ function App() {
     const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
     const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+    const [validationErrors, setValidationErrors] = useState<ValidationResult>({ errors: [], warnings: [] });
 
     const blockTypes = [
         { id: 'Var', name: 'Var' },
@@ -113,6 +114,15 @@ function App() {
         }
         return null;
     };
+
+    const validateCurrentProgram = useCallback(() => {
+        const result = validateProgram(blocks, connections, variables);
+        setValidationErrors(result);
+    }, [blocks, connections, variables]);
+
+    useEffect(() => {
+        validateCurrentProgram();
+    }, [blocks, connections, variables, validateCurrentProgram]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -232,6 +242,19 @@ function App() {
                 ctx.fillStyle = '#2D2D2D';
                 ctx.fillRect(block.x, block.y, 120, 60);
 
+                const blockErrors = validationErrors.errors.filter(e => e.blockId === block.id);
+                const blockWarnings = validationErrors.warnings.filter(w => w.blockId === block.id);
+
+                if (blockErrors.length > 0) {
+                    ctx.shadowColor = '#FF4444';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowOffsetY = 0;
+                } else if (blockWarnings.length > 0) {
+                    ctx.shadowColor = '#FFC107';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowOffsetY = 0;
+                }
+
                 ctx.shadowBlur = 0;
                 ctx.shadowColor = 'transparent';
                 ctx.strokeStyle = block.id === selectedBlockId ? '#FFC107' : '#D6413E';;
@@ -286,6 +309,18 @@ function App() {
                     ctx.fillText(block.name, block.x + 60, block.y + 30);
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
+                }
+
+                if (blockErrors.length > 0) {
+                    ctx.shadowBlur = 0;
+                    ctx.font = '16px Helvetica';
+                    ctx.fillStyle = '#FF4444';
+                    ctx.fillText('⚠', block.x + 100, block.y + 25);
+                } else if (blockWarnings.length > 0) {
+                    ctx.shadowBlur = 0;
+                    ctx.font = '16px Helvetica';
+                    ctx.fillStyle = '#FFC107';
+                    ctx.fillText('⚠', block.x + 100, block.y + 25);
                 }
 
                 const sockets = getBlockSockets(block);
@@ -800,6 +835,35 @@ const handleCanvasClick = () => {
                         <div className="execution-result">
                             <h3>Результат:</h3>
                             <pre>{executionResult || 'Нажмите "Запустить" для выполнения'}</pre>
+
+                            {(validationErrors.errors.length > 0 || validationErrors.warnings.length > 0) && (
+                                <>
+                                    <h3 style={{ color: '#FF4444', marginTop: '10px' }}>Проблемы:</h3>
+                                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                        {validationErrors.errors.map((err, idx) => (
+                                            <div key={idx} style={{ 
+                                                color: '#FF4444', 
+                                                fontSize: '12px',
+                                                padding: '4px',
+                                                borderBottom: '1px solid #FF4444'
+                                            }}>
+                                                ⚠ {err.message}
+                                            </div>
+                                        ))}
+                                        {validationErrors.warnings.map((warn, idx) => (
+                                            <div key={idx} style={{ 
+                                                color: '#FFC107', 
+                                                fontSize: '12px',
+                                                padding: '4px',
+                                                borderBottom: '1px solid #FFC107'
+                                            }}>
+                                                ⚠ {warn.message}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
                             {Object.keys(variables).length > 0 && (
                                 <>
                                     <h3>Переменные:</h3>
