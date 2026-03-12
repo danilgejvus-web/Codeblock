@@ -7,6 +7,7 @@ import { execute } from './interpreter';
 import { NameBlock } from './blocks/variable/NameBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 import { validateProgram, type BlockError, type ValidationResult } from './Validation';
+import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
 
 //TO DO
 // !разбить блоки по категориям. Добавить категории Write and Read?
@@ -77,7 +78,7 @@ function App() {
     }));
 
     function getBlockType(blockName: string): string {
-        if (['Num', 'Read', 'Write', 'Name', 'NumberConstant'].includes(blockName)) return 'Var';
+        if (['Num', 'Read', 'Write', 'Name', 'NumberConstant', 'DeclarationNum'].includes(blockName)) return 'Var';
         if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Greater'].includes(blockName)) return 'Arithmetic';
         if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'Logic';
         if (['While'].includes(blockName)) return 'Loop';
@@ -92,6 +93,34 @@ function App() {
     const getBlockSockets = (block: Block): SocketPoint[] => {
         const blockInfo = blockRegistry[block.type as keyof typeof blockRegistry];
         if (!blockInfo) return [];
+
+        let sockets = blockInfo.sockets;
+
+        if (block.type === 'DeclarationNum') {
+            const instance = block.instance as DeclarationBlock;
+            const names = instance?.getNames() || [];
+
+            if (names.length === 0) {
+                return [];
+            }
+            
+            sockets = Array.from({ length: names.length }, (_, i) => ({
+                id: `out${i + 1}`,
+                type: "output" as const,
+                name: names[i] || `var${i + 1}`
+            }));
+
+            return sockets.map(socket => ({
+                blockId: block.id,
+                socketId: socket.id,
+                type: socket.type,
+                name: socket.name || socket.id,
+                position: {
+                    x: block.x + 120,
+                    y: block.y + 20 + (sockets.filter(s => s.type === socket.type).indexOf(socket) * 20)
+                }
+            }));
+        }
 
         return blockInfo.sockets.map(socket => ({
             blockId: block.id,
@@ -319,6 +348,34 @@ function App() {
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
+                } else if (block.type === 'DeclarationNum') {
+                    const instance = block.instance as DeclarationBlock;
+                    const names = instance?.getNames() || [];
+                    const count = names.length;
+                    
+                    const blockHeight = count === 0 ? 60 : 60 + (count - 1) * 20;
+                    
+                    ctx.fillStyle = '#2D2D2D';
+                    ctx.fillRect(block.x, block.y, 120, blockHeight);
+                    ctx.strokeStyle = selectedBlockIds.has(block.id) ? '#FFC107' : '#D6413E';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(block.x, block.y, 120, blockHeight);
+                    
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = 'bold 14px Helvetica';
+                    ctx.fillText('Declaration', block.x + 60, block.y + 20);
+                    
+                    ctx.font = '10px Helvetica';
+                    ctx.fillStyle = '#D6413E';
+                    
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
+                    
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
                 } else {
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = '14px Helvetica';
@@ -418,38 +475,45 @@ function App() {
     }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockIds]);
 
     useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-      const handleDoubleClick = (e: MouseEvent) => {
-          const rect = canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
+        const handleDoubleClick = (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-          for (const block of blocks) {
-            if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
+            for (const block of blocks) {
+                if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
 
-              setSelectedBlockIds(new Set([block.id]));
+                    setSelectedBlockIds(new Set([block.id]));
 
-              if (block.type === 'Name') {
-                  const instance = block.instance as NameBlock;
-                  setEditingBlockId(block.id);
-                  setEditValue(instance.getName());
-                  break;
-              }
+                    if (block.type === 'Name') {
+                        const instance = block.instance as NameBlock;
+                        setEditingBlockId(block.id);
+                        setEditValue(instance.getName());
+                        break;
+                    }
 
-              if (block.type === 'NumberConstant') {
-                  const instance = block.instance as NumberConstantBlock;
-                  setEditingBlockId(block.id);
-                  setEditValue(instance.getValue().toString());
-                  break;
-              }
+                    if (block.type === 'NumberConstant') {
+                        const instance = block.instance as NumberConstantBlock;
+                        setEditingBlockId(block.id);
+                        setEditValue(instance.getValue().toString());
+                        break;
+                    }
+
+                    if (block.type === 'DeclarationNum') {
+                        const instance = block.instance as DeclarationBlock;
+                        setEditingBlockId(block.id);
+                        setEditValue(instance.getNamesString());
+                        break;
+                    }
+                }
             }
-          }
-    };
+        };
 
-    canvas.addEventListener('dblclick', handleDoubleClick);
-    return () => canvas.removeEventListener('dblclick', handleDoubleClick);
+        canvas.addEventListener('dblclick', handleDoubleClick);
+        return () => canvas.removeEventListener('dblclick', handleDoubleClick);
     }, [blocks]);
 
     const handleBlockClick = (block: typeof blockNames[0]) => {
@@ -472,6 +536,15 @@ function App() {
               blockType: block.id,
               instance: instance
           });
+        } else if (block.id === 'DeclarationNum') {
+            console.log('Creating DeclarationBlock');
+            const instance = new DeclarationBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
         } else {
             new blockInfo.class();
             setDraggedBlock({
@@ -492,11 +565,13 @@ const handleCanvasClick = () => {
             const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
 
             let instance;
-            if ((draggedBlock.blockType === 'Name' || draggedBlock.blockType === 'NumberConstant')
+            if ((draggedBlock.blockType === 'Name' ||
+                draggedBlock.blockType === 'NumberConstant' ||
+                draggedBlock.blockType === 'DeclarationNum')
                 && draggedBlock.instance) {
                 instance = draggedBlock.instance;
             } else {
-                instance = new blockInfo.class();
+                instance = draggedBlock.instance;
             }
 
             setBlocks([...blocks, {
@@ -787,49 +862,93 @@ const handleCanvasClick = () => {
                     border: '2px solid #D6413E',
                     borderRadius: '8px',
                     zIndex: 1000,
+                    width: '300px',
                 }}>
                     <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
-                        {blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant' 
-                            ? 'Введите число' 
-                            : 'Введите имя переменной'}
+                        {blocks.find(b => b.id === editingBlockId)?.type === 'DeclarationNum'
+                            ? 'Объявление переменных'
+                            : blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant'
+                                ? 'Введите число'
+                                : 'Введите имя переменной'}
                     </h3>
-                    <input
-                        type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant' 
-                            ? 'number' 
-                            : 'text'}
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                const block = blocks.find(b => b.id === editingBlockId);
-                                if (block) {
-                                    if (block.instance instanceof NameBlock) {
-                                        block.instance.setName(editValue);
-                                    } else if (block.instance instanceof NumberConstantBlock) {
-                                        const numValue = parseFloat(editValue) || 0;
-                                        block.instance.setValue(numValue);
+
+                    {blocks.find(b => b.id === editingBlockId)?.type === 'DeclarationNum' ? (
+                        <>
+                            <div style={{ marginBottom: '10px' }}>
+                                <label style={{ color: '#D4D4D4', fontSize: '12px', display: 'block', marginBottom: '5px' }}>
+                                    Имена переменных (через запятую):
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const block = blocks.find(b => b.id === editingBlockId);
+                                            if (block && block.instance instanceof DeclarationBlock) {
+                                                block.instance.setNames(editValue);
+                                                setBlocks([...blocks]);
+                                                setEditingBlockId(null);
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        background: '#1E1E1E',
+                                        color: '#D4D4D4',
+                                        border: '1px solid #D6413E',
+                                        padding: '8px',
+                                        width: '100%',
+                                    }}
+                                    placeholder="x, y, z"
+                                    autoFocus
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <input
+                                type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant'
+                                    ? 'number'
+                                    : 'text'}
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        const block = blocks.find(b => b.id === editingBlockId);
+                                        if (block) {
+                                            if (block.instance instanceof NameBlock) {
+                                                block.instance.setName(editValue);
+                                            } else if (block.instance instanceof NumberConstantBlock) {
+                                                const numValue = parseFloat(editValue) || 0;
+                                                block.instance.setValue(numValue);
+                                            }
+                                            setBlocks([...blocks]);
+                                        }
+                                        setEditingBlockId(null);
                                     }
-                                    setBlocks([...blocks]);
-                                }
-                                setEditingBlockId(null);
-                            }
-                        }}
-                        style={{
-                            background: '#1E1E1E',
-                            color: '#D4D4D4',
-                            border: '1px solid #D6413E',
-                            padding: '8px',
-                            width: '200px',
-                            marginBottom: '10px',
-                        }}
-                        autoFocus
-                    />
+                                }}
+                                style={{
+                                    background: '#1E1E1E',
+                                    color: '#D4D4D4',
+                                    border: '1px solid #D6413E',
+                                    padding: '8px',
+                                    width: '100%',
+                                    marginBottom: '10px',
+                                }}
+                                autoFocus
+                            />
+                        </>
+                    )}
+                    
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                         <button
                             onClick={() => {
                                 const block = blocks.find(b => b.id === editingBlockId);
                                 if (block) {
-                                    if (block.instance instanceof NameBlock) {
+                                    if (block.instance instanceof DeclarationBlock) {
+                                        block.instance.setNames(editValue);
+                                        setBlocks([...blocks]);
+                                    } else if (block.instance instanceof NameBlock) {
                                         block.instance.setName(editValue);
                                     } else if (block.instance instanceof NumberConstantBlock) {
                                         const numValue = parseFloat(editValue) || 0;
@@ -865,7 +984,7 @@ const handleCanvasClick = () => {
                         </button>
                     </div>
                 </div>
-                )}
+            )}
 
                 <div className="containerCreateBlock">
                     <div className="typeBlock">

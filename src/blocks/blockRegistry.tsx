@@ -27,8 +27,14 @@ import { WriteBlock } from "./variable/WriteBlock";
 import { NameBlock } from "./variable/NameBlock";
 import { NumberConstantBlock } from "./variable/NumberConstantBlock";
 import { StringBlock } from "./variable/StringBlock";
+import { DeclarationBlock } from "./variable/DeclarationBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
+    DeclarationNum: {
+        name: "DeclarationNum",
+        class: DeclarationBlock,
+        sockets: []
+    },
     Sum: {
         name: "Sum",
         class: SumBlock,

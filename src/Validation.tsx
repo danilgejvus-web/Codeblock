@@ -1,6 +1,7 @@
 import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
+import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
 import type { NameBlock } from "./blocks/variable/NameBlock";
 
 export interface BlockError {
@@ -13,6 +14,23 @@ export interface BlockError {
 export type ValidationResult = {
     errors: BlockError[];
     warnings: BlockError[];
+};
+
+const isValidVariableName = (name: string): boolean => {
+    if (!name || name.length === 0) return false;
+    
+    const firstChar = name[0];
+    if (!/^[a-zA-Z_]$/.test(firstChar)) {
+        return false;
+    }
+    
+    for (let i = 1; i < name.length; i++) {
+        if (!/^[a-zA-Z0-9_]$/.test(name[i])) {
+            return false;
+        }
+    }
+    
+    return true;
 };
 
 const checkNumericInputs = (
@@ -209,7 +227,30 @@ export const validateProgram = (
                     });
                 }
                 break;
+            
+            case 'DeclarationNum':
+                const declInstance = block.instance as DeclarationBlock;
+                const names = declInstance?.getNames() || [];
                 
+                if (names.length === 0) {
+                    warnings.push({
+                        blockId: block.id,
+                        type: 'warning',
+                        message: 'Блок объявления не содержит имен переменных'
+                    });
+                }
+                
+                names.forEach(name => {
+                    if (!isValidVariableName(name)) {
+                        errors.push({
+                            blockId: block.id,
+                            type: 'error',
+                            message: `Недопустимое имя переменной "${name}". Имя должно начинаться с буквы или _ и содержать только буквы, цифры и _`
+                        });
+                    }
+                });
+                break;
+
             case 'Read':
                 checkVariableExists(block, connections, blocks, variables, errors, warnings);
                 break;
