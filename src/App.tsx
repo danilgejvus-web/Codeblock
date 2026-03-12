@@ -55,7 +55,6 @@ function App() {
     const [editValue, setEditValue] = useState<string>('');
     const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
     const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-    const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<ValidationResult>({ errors: [], warnings: [] });
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectionStart, setSelectionStart] = useState<Point | null>(null);
@@ -276,7 +275,7 @@ function App() {
 
                 ctx.shadowBlur = 0;
                 ctx.shadowColor = 'transparent';
-                ctx.strokeStyle = block.id === selectedBlockId ? '#FFC107' : '#D6413E';;
+                ctx.strokeStyle = selectedBlockIds.has(block.id) ? '#FFC107' : '#D6413E';;
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
@@ -416,7 +415,7 @@ function App() {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockId]);
+    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockIds]);
 
     useEffect(() => {
       const canvas = canvasRef.current;
@@ -430,7 +429,7 @@ function App() {
           for (const block of blocks) {
             if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
 
-              setSelectedBlockId(block.id);
+              setSelectedBlockIds(new Set([block.id]));
 
               if (block.type === 'Name') {
                   const instance = block.instance as NameBlock;
