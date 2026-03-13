@@ -28,6 +28,7 @@ import { StringConstantBlock } from "./variable/StringConstantBlock";
 import { NumberConstantBlock } from "./variable/NumberConstantBlock";
 import { StringBlock } from "./variable/StringBlock";
 import { DeclarationBlock } from "./variable/DeclarationBlock";
+import { BooleanConstantBlock } from "./variable/BooleanConstantBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     DeclarationNum: {
@@ -84,59 +85,66 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "NumVar",
         class: NumBlock,
         sockets: [
-            {id: "set", type: "input", name: "SetValue"},
-            {id: "setName", type: "input", name: "SetName"},
-            {id: "out", type: "output", name: "value"}
+            {id: "set", type: "input", name: "setVal"},
+            {id: "setName", type: "input", name: "setName"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     Read: {
         name: "Read",
         class: ReadBlock,
         sockets: [
-            {id: "in1", type: "input", name: "VariableName"},
-            {id: "out", type: "output", name: "value"}
+            {id: "in1", type: "input", name: "varName"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     Write: {
         name: "Write",
         class: WriteBlock,
         sockets: [
-            {id: "set", type: "input", name: "SetValue"},
-            {id: "setName", type: "input", name: "VariableName"},
-            {id: "out", type: "output", name: "value"}
+            {id: "set", type: "input", name: "setVal"},
+            {id: "setName", type: "input", name: "varName"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     String: {
         name: "String",
         class: StringConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "string" }
+            { id: "value", type: "output", name: "str" }
         ]
     },
     NumberConstant: {
         name: "Number",
         class: NumberConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "Value" }
+            { id: "value", type: "output", name: "val" }
+        ]
+    },
+    BooleanConstant: {
+        name: "Boolean",
+        class: BooleanConstantBlock,
+        sockets: [
+            { id: "value", type: "output", name: "val" }
         ]
     },
     If: {
         name: "If",
         class: IfBlock,
         sockets: [
-            {id: "bool", type: "input", name: "Condition"},
-            {id: "passInput", type: "input", name: "PassInput"},
-            {id: "true", type: "output", name: "True"},
-            {id: "false", type: "output", name: "False"}
+            {id: "bool", type: "input", name: "con"},
+            {id: "passInput", type: "input", name: "passInput"},
+            {id: "true", type: "output", name: "true"},
+            {id: "false", type: "output", name: "false"}
         ]
     },
     EndIf: {
         name: "EndIf",
         class: EndIfBlock,
         sockets: [
-            {id: "in1", type: "input", name: "BranchA"},
-            {id: "in2", type: "input", name: "BranchB"},
-            {id: "out", type: "output", name: "Merged"},
+            {id: "in1", type: "input", name: "branchA"},
+            {id: "in2", type: "input", name: "branchB"},
+            {id: "out", type: "output", name: "merge"},
         ]
     },
     Equal: {
@@ -197,9 +205,9 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "BoolVar",
         class: BoolBlock,
         sockets: [
-            {id: "set", type: "input", name: "SetValue"},
-            {id: "setName", type: "input", name: "SetName"},
-            {id: "out", type: "output", name: "value"}
+            {id: "set", type: "input", name: "setVal"},
+            {id: "setName", type: "input", name: "setName"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     And: {
@@ -232,36 +240,36 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "While",
         class: WhileBlock,
         sockets: [
-            {id: "in", type: "input", name: "In"},
-            {id: "condition", type: "input", name: "Condition"},
-            {id: "out", type: "output", name: "Out"}
+            {id: "in", type: "input", name: "in"},
+            {id: "condition", type: "input", name: "con"},
+            {id: "out", type: "output", name: "out"}
         ]
     },
     NumArray: {
     name: "NumArray",
         class: NumArrayBlock,
         sockets: [
-            {id: "setName", type: "input", name: "SetName"},
-            {id: "setLength", type: "input", name: "SetLength"},
-            {id: "out", type: "output", name: "value"}
+            {id: "setName", type: "input", name: "setName"},
+            {id: "setLength", type: "input", name: "setLen"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     ReadArray: {
         name: "ReadArray",
         class: ReadArrayBlock,
         sockets: [
-            {id: "in1", type: "input", name: "ArrayName"},
-            {id: "in2", type: "input", name: "ArrayIndex"},
-            {id: "out", type: "output", name: "value"}
+            {id: "in1", type: "input", name: "arrName"},
+            {id: "in2", type: "input", name: "arrInd"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     WriteArray: {
         name: "WriteArray",
         class: WriteArrayBlock,
         sockets: [
-            {id: "setName", type: "input", name: "ArrayName"},
-            {id: "setLength", type: "input", name: "ArrayLength"},
-            {id: "out", type: "output", name: "value"}
+            {id: "setName", type: "input", name: "arrName"},
+            {id: "setLength", type: "input", name: "arrLen"},
+            {id: "out", type: "output", name: "val"}
         ]
     },
     Expression: {
@@ -275,9 +283,9 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "StringVar",
         class: StringBlock,
         sockets: [
-            {id: "set", type: "input", name: "SetValue"},
-            {id: "setName", type: "input", name: "SetName"},
-            {id: "out", type: "output", name: "value"}
+            {id: "set", type: "input", name: "setVal"},
+            {id: "setName", type: "input", name: "setName"},
+            {id: "out", type: "output", name: "val"}
         ]
     }
 }

@@ -8,6 +8,8 @@ import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 import { validateProgram, type BlockError, type ValidationResult } from './Validation';
 import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
+import { BooleanConstantBlock } from './blocks/variable/BooleanConstantBlock';
+import { EditDialog } from './components/EditDialog';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -16,6 +18,7 @@ import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
 // -баг у текста output в блоке NumConstant: маленький текст
 // сделать канву подвижной
 // сделать надписи у призраков по центру
+// оверлей вокруг диалога
 
 // сделать блоки декларации для bool и string
 // сделать bool константу
@@ -76,7 +79,7 @@ function App() {
     function getBlockType(blockName: string): string {
         if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
         if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Expression'].includes(blockName)) return 'Arithmetic';
-        if (['String', 'Number'].includes(blockName)) return 'Constant';
+        if (['String', 'Number', 'Boolean'].includes(blockName)) return 'Constant';
         if (['NumVar', 'StringVar', 'BoolVar', 'Read', 'Write', 'DeclarationNum'].includes(blockName)) return 'Variable';
         if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual', 'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
         if (['While'].includes(blockName)) return 'Loop';
@@ -345,7 +348,27 @@ function App() {
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
-                } else if (block.type === 'DeclarationNum') {
+                } else if (block.type === 'BooleanConstant') {
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = 'bold 14px Helvetica';
+                    ctx.fillText('Boolean', block.x + 60, block.y + 15);
+                    
+                    ctx.font = '12px Helvetica';
+                    ctx.fillStyle = '#D6413E';
+                    const boolInstance = block.instance as BooleanConstantBlock;
+                    const value = boolInstance ? boolInstance.getValue() : false;
+                    ctx.fillText(value ? 'true' : 'false', block.x + 60, block.y + 35);
+                    
+                    ctx.font = '8px Helvetica';
+                    ctx.fillStyle = '#868686';
+                    ctx.fillText('double-click to edit', block.x + 60, block.y + 50);
+                    
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
+                }else if (block.type === 'DeclarationNum') {
                     const instance = block.instance as DeclarationBlock;
                     const names = instance?.getNames() || [];
                     const count = names.length;
@@ -499,6 +522,13 @@ function App() {
                         break;
                     }
 
+                    if (block.type === 'BooleanConstant') {
+                        const instance = block.instance as BooleanConstantBlock;
+                        setEditingBlockId(block.id);
+                        setEditValue(instance.getValue() ? 'true' : 'false');
+                        break;
+                    }
+
                     if (block.type === 'DeclarationNum') {
                         const instance = block.instance as DeclarationBlock;
                         setEditingBlockId(block.id);
@@ -533,6 +563,15 @@ function App() {
               blockType: block.id,
               instance: instance
           });
+        } else if (block.id === 'BooleanConstant') {
+            console.log('Creating BooleanConstantBlock');
+            const instance = new BooleanConstantBlock(false);
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
         } else if (block.id === 'DeclarationNum') {
             console.log('Creating DeclarationBlock');
             const instance = new DeclarationBlock();
@@ -559,25 +598,13 @@ const handleCanvasClick = () => {
         const y = Math.round((mousePos.y - 30) / 20) * 20;
 
         if (x >= 0 && y >= 0 && x + 120 <= canvasRef.current!.width && y + 60 <= canvasRef.current!.height) {
-            const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
-
-            let instance;
-            if ((draggedBlock.blockType === 'String' ||
-                draggedBlock.blockType === 'NumberConstant' ||
-                draggedBlock.blockType === 'DeclarationNum')
-                && draggedBlock.instance) {
-                instance = draggedBlock.instance;
-            } else {
-                instance = draggedBlock.instance;
-            }
-
             setBlocks([...blocks, {
                 id: Date.now().toString(),
                 type: draggedBlock.blockType,
                 name: draggedBlock.name,
                 x,
                 y,
-                instance
+                instance: draggedBlock.instance
             }]);
         }
         setDraggedBlock(null);
@@ -801,17 +828,6 @@ const handleCanvasClick = () => {
         setExecutionResult('');
     };
 
-    const handleDeleteConnection = () => {
-        if (hoveredSocket) {
-            setConnections(connections.filter(conn =>
-                !(conn.toBlockID === hoveredSocket.blockId &&
-                    conn.toSocketID === hoveredSocket.socketId) &&
-                !(conn.fromBlockID === hoveredSocket.blockId &&
-                    conn.fromSocketID === hoveredSocket.socketId)
-            ));
-        }
-    };
-
     return (
         <div id="root">
             <header>
@@ -848,140 +864,31 @@ const handleCanvasClick = () => {
                     </div>
                 </div>
 
-                {editingBlockId && (
-                <div style={{
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: '#2D2D2D',
-                    padding: '20px',
-                    border: '2px solid #D6413E',
-                    borderRadius: '8px',
-                    zIndex: 1000,
-                    width: '300px',
-                }}>
-                    <h3 style={{ color: '#D4D4D4', marginBottom: '10px' }}>
-                        {blocks.find(b => b.id === editingBlockId)?.type === 'DeclarationNum'
-                            ? 'Объявление переменных'
-                            : blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant'
-                                ? 'Введите число'
-                                : 'Введите имя переменной'}
-                    </h3>
+                <EditDialog
+                    editingBlockId={editingBlockId}
+                    blocks={blocks}
+                    editValue={editValue}
+                    onEditValueChange={setEditValue}
+                    onSave={() => {
+                        const block = blocks.find(b => b.id === editingBlockId);
+                        if (!block) return;
 
-                    {blocks.find(b => b.id === editingBlockId)?.type === 'DeclarationNum' ? (
-                        <>
-                            <div style={{ marginBottom: '10px' }}>
-                                <label style={{ color: '#D4D4D4', fontSize: '12px', display: 'block', marginBottom: '5px' }}>
-                                    Имена переменных (через запятую):
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            const block = blocks.find(b => b.id === editingBlockId);
-                                            if (block && block.instance instanceof DeclarationBlock) {
-                                                block.instance.setNames(editValue);
-                                                setBlocks([...blocks]);
-                                                setEditingBlockId(null);
-                                            }
-                                        }
-                                    }}
-                                    style={{
-                                        background: '#1E1E1E',
-                                        color: '#D4D4D4',
-                                        border: '1px solid #D6413E',
-                                        padding: '8px',
-                                        width: '100%',
-                                    }}
-                                    placeholder="x, y, z"
-                                    autoFocus
-                                />
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <input
-                                type={blocks.find(b => b.id === editingBlockId)?.type === 'NumberConstant'
-                                    ? 'number'
-                                    : 'text'}
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        const block = blocks.find(b => b.id === editingBlockId);
-                                        if (block) {
-                                            if (block.instance instanceof StringConstantBlock) {
-                                                block.instance.setName(editValue);
-                                            } else if (block.instance instanceof NumberConstantBlock) {
-                                                const numValue = parseFloat(editValue) || 0;
-                                                block.instance.setValue(numValue);
-                                            }
-                                            setBlocks([...blocks]);
-                                        }
-                                        setEditingBlockId(null);
-                                    }
-                                }}
-                                style={{
-                                    background: '#1E1E1E',
-                                    color: '#D4D4D4',
-                                    border: '1px solid #D6413E',
-                                    padding: '8px',
-                                    width: '100%',
-                                    marginBottom: '10px',
-                                }}
-                                autoFocus
-                            />
-                        </>
-                    )}
-                    
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                        <button
-                            onClick={() => {
-                                const block = blocks.find(b => b.id === editingBlockId);
-                                if (block) {
-                                    if (block.instance instanceof DeclarationBlock) {
-                                        block.instance.setNames(editValue);
-                                        setBlocks([...blocks]);
-                                    } else if (block.instance instanceof StringConstantBlock) {
-                                        block.instance.setName(editValue);
-                                    } else if (block.instance instanceof NumberConstantBlock) {
-                                        const numValue = parseFloat(editValue) || 0;
-                                        block.instance.setValue(numValue);
-                                    }
-                                    setBlocks([...blocks]);
-                                }
-                                setEditingBlockId(null);
-                            }}
-                            style={{
-                                background: '#D6413E',
-                                color: 'white',
-                                padding: '5px 15px',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            OK
-                        </button>
-                        <button
-                            onClick={() => setEditingBlockId(null)}
-                            style={{
-                                background: '#D4D4D4',
-                                color: '#1E1E1E',
-                                padding: '5px 15px',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Отмена
-                        </button>
-                    </div>
-                </div>
-            )}
+                        if (block.instance instanceof DeclarationBlock) {
+                            block.instance.setNames(editValue);
+                        } else if (block.instance instanceof StringConstantBlock) {
+                            block.instance.setName(editValue);
+                        } else if (block.instance instanceof NumberConstantBlock) {
+                            const numValue = parseFloat(editValue) || 0;
+                            block.instance.setValue(numValue);
+                        } else if (block.instance instanceof BooleanConstantBlock) {
+                            block.instance.setValue(editValue === 'true');
+                        }
+
+                        setBlocks([...blocks]);
+                        setEditingBlockId(null);
+                    }}
+                    onClose={() => setEditingBlockId(null)}
+                />
 
                 <div className="containerCreateBlock">
                     <div className="typeBlock">

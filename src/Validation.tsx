@@ -1,8 +1,9 @@
 import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
+import type { BooleanConstantBlock } from "./blocks/variable/BooleanConstantBlock";
 import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
-import type { NameBlock } from "./blocks/variable/StringConstantBlock";
+import type { StringConstantBlock } from "./blocks/variable/StringConstantBlock";
 
 export interface BlockError {
     blockId: string;
@@ -155,8 +156,8 @@ const checkVariableExists = (
     const nameBlock = blocks.find(b => b.id === nameConn.fromBlockID);
     if (!nameBlock) return;
 
-    if (nameBlock.type === 'Name') {
-        const instance = nameBlock.instance as NameBlock;
+    if (nameBlock.type === 'String') {
+        const instance = nameBlock.instance as StringConstantBlock;
         const varName = instance?.getName();
         
         if (varName && variables[varName] === undefined) {
@@ -253,6 +254,19 @@ export const validateProgram = (
 
             case 'Read':
                 checkVariableExists(block, connections, blocks, variables, errors, warnings);
+                break;
+            
+            case 'BooleanConstant':
+                const boolInstance = block.instance as BooleanConstantBlock;
+                const boolValue = boolInstance?.getValue();
+                
+                if (typeof boolValue !== 'boolean') {
+                    warnings.push({
+                        blockId: block.id,
+                        type: 'warning',
+                        message: 'Boolean должно содержать булево значение'
+                    });
+                }
                 break;
         }
     });
