@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
-import type { Block } from './blocks/BlockMetadata';
+import type { Block, SubGraph } from './blocks/BlockMetadata';
 import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
@@ -17,6 +17,15 @@ import { NumArrayBlock } from './blocks/variable/NumArrayBlock';
 import { ReadArrayBlock } from './blocks/variable/ReadArrayBlock';
 import { WriteArrayBlock } from './blocks/variable/WriteArrayBlock';
 import { LocalExecutionContext } from './storages/LocalExecutionContext';
+import { WhileBlock } from './blocks/logic/WhileBlock';
+import { ForBlock } from './blocks/logic/ForBlock';
+import { FunctionBlock } from './blocks/function/FunctionBlock';
+import { SelfBlock } from './blocks/function/SelfBlock';
+import { CallBlock } from './blocks/function/CallBlock';
+import { StringCastBlock } from './blocks/typecasting/StringCastBlock';
+import { NumCastBlock } from './blocks/typecasting/NumCastBlock';
+import { BooleanCastBlock } from './blocks/typecasting/BooleanCastBlock';
+import { ArrayCastBlock } from './blocks/typecasting/ArrayCastBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -59,7 +68,7 @@ function App() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [connections, setConnections] = useState<Connection[]>([]);
     const [blocks, setBlocks] = useState<Block[]>([]);
-    const [draggedBlock, setDraggedBlock] = useState<{ type: string; name: string; blockType: string; instance?: any} | null>(null);
+    const [draggedBlock, setDraggedBlock] = useState<{ type: string; name: string; blockType: string; instance?: any, subGraph?: SubGraph} | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [draggingConnection, setDraggingConnection] = useState<{ fromBlockId: string; fromSocketId: string; fromPoint: Point; } | null>(null);
     const [executionResult, setExecutionResult] = useState<string>('');
@@ -77,6 +86,7 @@ function App() {
     const [selectionStart, setSelectionStart] = useState<Point | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
     const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
+    const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[]} | null>(null);
 
     const blockTypes = [
         { id: 'Array', name: 'Array' },
@@ -85,6 +95,14 @@ function App() {
         { id: 'Variable', name: 'Variable' },
         { id: 'Logic', name: 'Logic' },
         { id: 'Loop', name: 'Loop' },
+        { id: 'Function', name: 'Function' },
+        { id: 'Cast', name: 'Cast' },
+    ];
+
+    const compositeTypes = [
+        'While',
+        'For',
+        'Function',
     ];
 
     const blockNames = Object.entries(blockRegistry).map(([id, info]) => ({
@@ -102,7 +120,9 @@ function App() {
             'BoolDecl', 'StringDecl'].includes(blockName)) return 'Variable';
         if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual',
             'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
-        if (['While'].includes(blockName)) return 'Loop';
+        if (['While', 'For', 'ForEach'].includes(blockName)) return 'Loop';
+        if (['Function', 'Self', 'Call'].includes(blockName)) return 'Function';
+        if (['StringCast', 'NumCast', 'BooleanCast', 'ArrayCast'].includes(blockName)) return 'Cast';
         return 'Variable';
     }
 
@@ -164,7 +184,8 @@ function App() {
     };
 
     const findSocketAtPosition = (x: number, y: number): SocketPoint | null => {
-        for (const block of blocks) {
+        const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+        for (const block of currentBlocks) {
             const sockets = getBlockSockets(block);
             for (const socket of sockets) {
                 const distance = Math.sqrt(Math.pow(x - socket.position.x, 2) + Math.pow(y - socket.position.y, 2));
@@ -212,13 +233,26 @@ function App() {
             }
 
             if (e.key === 'Delete' && selectedBlockIds.size > 0) {
-               setConnections(prev => prev.filter(conn => 
+                const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+                const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
+                
+               const newConnections = currentConnections.filter(conn => 
                 !selectedBlockIds.has(conn.fromBlockID) && 
                 !selectedBlockIds.has(conn.toBlockID)
-              ));
+                );
+                const newBlocks = currentBlocks.filter(b => !selectedBlockIds.has(b.id));
               
-              setBlocks(prev => prev.filter(block => !selectedBlockIds.has(block.id)));
-            setSelectedBlockIds(new Set());
+                if (editingSubGraph) {
+                    setEditingSubGraph({
+                        ...editingSubGraph,
+                        blocks: newBlocks,
+                        connections: newConnections
+                    });
+                } else {
+                    setConnections(newConnections);
+                    setBlocks(newBlocks);
+                }
+                setSelectedBlockIds(new Set())
             }
         };
 
@@ -237,6 +271,9 @@ function App() {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
         }
+
+        const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+        const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
 
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -260,9 +297,9 @@ function App() {
             }
 
             ctx.lineWidth = 2;
-            connections.forEach(conn => {
-                const fromBlock = blocks.find(b => b.id === conn.fromBlockID);
-                const toBlock = blocks.find(b => b.id === conn.toBlockID);
+            currentConnections.forEach(conn => {
+                const fromBlock = currentBlocks.find(b => b.id === conn.fromBlockID);
+                const toBlock = currentBlocks.find(b => b.id === conn.toBlockID);
 
                 if (!fromBlock || !toBlock) return;
 
@@ -304,7 +341,7 @@ function App() {
                 
                 ctx.setLineDash([]);
             }
-            blocks.forEach(block => {
+            currentBlocks.forEach(block => {
                 if (selectedBlockIds.has(block.id)) {
                     ctx.shadowColor = '#D6413E';
                     ctx.shadowBlur = 15;
@@ -500,7 +537,7 @@ function App() {
                     ctx.beginPath();
 
                     if (socket.type === 'input') {
-                        const hasConnection = connections.some(conn => 
+                        const hasConnection = currentConnections.some(conn => 
                             conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
                         );
                         
@@ -580,10 +617,21 @@ function App() {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            for (const block of blocks) {
+            const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+
+            for (const block of currentBlocks) {
                 if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
 
                     setSelectedBlockIds(new Set([block.id]));
+
+                    if (compositeTypes.includes(block.type) && block.subGraph) {
+                        setEditingSubGraph({
+                            rootID: block.id,
+                            blocks: block.subGraph.blocks,
+                            connections: block.subGraph.connections
+                        });
+                        return;
+                    }
 
                     if (block.type === 'String') {
                         const instance = block.instance as StringConstantBlock;
@@ -638,6 +686,7 @@ function App() {
 
     const handleBlockClick = (block: typeof blockNames[0]) => {
         const blockInfo = blockRegistry[block.id as keyof typeof blockRegistry];
+        const defaultSubGraph = { blocks: [], connections: [], in: new Map(), out: new Map() };
 
         if (block.id === 'String') {
           const instance = new StringConstantBlock('var');
@@ -723,12 +772,90 @@ function App() {
                 blockType: block.id,
                 instance: instance
             });
-        } else {
-            new blockInfo.class();
+        } else if (block.id === 'While') {
+            const instance = new WhileBlock();
             setDraggedBlock({
                 type: block.typeId,
                 name: block.name,
-                blockType: block.id
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
+        } else if (block.id === 'For') {
+            const instance = new ForBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
+        } else if (block.id === 'Function') {
+            const instance = new FunctionBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
+        } else if (block.id === 'Self') {
+            const instance = new SelfBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+            });
+        } else if (block.id === 'Call') {
+            const instance = new CallBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+            });
+        } else if (block.id === 'StringCast') {
+            const instance = new StringCastBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
+        } else if (block.id === 'NumCast') {
+            const instance = new NumCastBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'BooleanCast') {
+            const instance = new BooleanCastBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'ArrayCast') {
+            const instance = new ArrayCastBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        }
+        else {
+            const instance = new blockInfo.class();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
             });
         }
       };
@@ -740,14 +867,29 @@ const handleCanvasClick = () => {
         const y = Math.round((mousePos.y - 30) / 20) * 20;
 
         if (x >= 0 && y >= 0 && x + 120 <= canvasRef.current!.width && y + 60 <= canvasRef.current!.height) {
-            setBlocks([...blocks, {
+            const newBlock: Block = {
                 id: Date.now().toString(),
                 type: draggedBlock.blockType,
                 name: draggedBlock.name,
                 x,
                 y,
                 instance: draggedBlock.instance
-            }]);
+            };
+
+            const defaultSubGraph = { blocks: [], connections: [], in: new Map(), out: new Map() };
+
+            if (compositeTypes.includes(draggedBlock.blockType)) {
+                newBlock.subGraph = defaultSubGraph;
+            }
+
+            if (editingSubGraph) {
+                setEditingSubGraph({
+                    ...editingSubGraph,
+                    blocks: [...editingSubGraph.blocks, newBlock]
+                });
+            } else {
+                setBlocks([...blocks, newBlock]);
+            }
         }
         setDraggedBlock(null);
     };
@@ -767,19 +909,28 @@ const handleCanvasClick = () => {
         }
 
         if (socket && socket.type === 'input') {
-            const connectionToRemove = connections.find(conn => 
+            const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
+            const connectionToRemove = currentConnections.find(conn => 
                 conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
             );
             
             if (connectionToRemove) {
                 console.log('Удаляем соединение:', connectionToRemove);
-                setConnections(prev => prev.filter(conn => conn.id !== connectionToRemove.id));
+                if (editingSubGraph) {
+                    setEditingSubGraph({
+                        ...editingSubGraph,
+                        connections: editingSubGraph.connections.filter(c => c.id !== connectionToRemove.id)
+                    });
+                } else {
+                    setConnections(prev => prev.filter(conn => conn.id !== connectionToRemove.id));
+                }
             }
             return;
         }
 
+        const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
         let blockFound = false;
-        for (const block of blocks) {
+        for (const block of currentBlocks) {
           if (mousePos.x >= block.x && mousePos.x <= block.x + 120 &&
               mousePos.y >= block.y && mousePos.y <= block.y + 60) {
                 if (e.shiftKey) {
@@ -796,7 +947,7 @@ const handleCanvasClick = () => {
                 else {
                     if (!selectedBlockIds.has(block.id)) {
                         setSelectedBlockIds(new Set([block.id]));
-                }
+                    }
                 }
               
               setDragOffset({
@@ -820,7 +971,6 @@ const handleCanvasClick = () => {
     };
 
     const handleCanvasMouseUp = (e: React.MouseEvent) => {
-
             if (isSelecting && selectionStart && selectionEnd) {
                 const rect = {
                     left: Math.min(selectionStart.x, selectionEnd.x),
@@ -829,7 +979,8 @@ const handleCanvasClick = () => {
                     bottom: Math.max(selectionStart.y, selectionEnd.y)
                 };
             
-            const blocksInRect = blocks.filter(block => {
+            const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+            const blocksInRect = currentBlocks.filter(block => {
                 const blockLeft = block.x;
                 const blockRight = block.x + 120;
                 const blockTop = block.y;
@@ -865,13 +1016,22 @@ const handleCanvasClick = () => {
                     toSocketID: targetSocket.socketId
                 };
 
-                const filteredConnections = connections.filter(conn => 
+                const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
+
+                const filteredConnections = currentConnections.filter(conn => 
                     !(conn.toBlockID === targetSocket.blockId && 
                     conn.toSocketID === targetSocket.socketId)
                 );
 
                 console.log('Заменяем соединение на:', newConnection);
-                setConnections([...filteredConnections, newConnection]);
+                if (editingSubGraph) {
+                    setEditingSubGraph({
+                        ...editingSubGraph,
+                        connections: [...filteredConnections, newConnection]
+                    });
+                } else {
+                    setConnections([...filteredConnections, newConnection]);
+                }
             }
 
             setDraggingConnection(null);
@@ -894,7 +1054,7 @@ const handleCanvasClick = () => {
 
       if (isSelecting && selectionStart) {
         setSelectionEnd({ x, y });
-    }
+        }
       if (draggedBlockId && dragOffset) {
           let newX = x - dragOffset.x;
           let newY = y - dragOffset.y;
@@ -904,18 +1064,28 @@ const handleCanvasClick = () => {
           
           newX = Math.max(0, Math.min(newX, canvasRef.current.width - 120));
           newY = Math.max(0, Math.min(newY, canvasRef.current.height - 60));
-          const currentBlock = blocks.find(b => b.id === draggedBlockId);
+
+          const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+          const currentBlock = currentBlocks.find(b => b.id === draggedBlockId);
           if (currentBlock) {
             const dx = newX - currentBlock.x;
             const dy = newY - currentBlock.y;
 
-         setBlocks(prevBlocks => 
-            prevBlocks.map(block => 
+        const updateBlocks = (prevBlocks: Block[]) =>
+            prevBlocks.map(block =>
                 selectedBlockIds.has(block.id) || block.id === draggedBlockId
-                    ? { ...block, x: block.x + dx, y: block.y + dy }
-                    : block
-                )
+                ? { ...block, x: block.x + dx, y: block.y + dy }
+                : block
             );
+
+            if (editingSubGraph) {
+                setEditingSubGraph({
+                    ...editingSubGraph,
+                    blocks: updateBlocks(editingSubGraph.blocks)
+                });
+            } else {
+                setBlocks(updateBlocks);
+            }
         }
     }
       
@@ -960,6 +1130,28 @@ const handleCanvasClick = () => {
         setConnections([]);
         setVariables({});
         setExecutionResult('');
+        setEditingSubGraph(null);
+    };
+
+    const handleReturn = () => {
+        if (!editingSubGraph) return;
+
+        setBlocks(prevBlocks => 
+            prevBlocks.map(b =>
+                b.id === editingSubGraph.rootID
+                ? {
+                    ...b,
+                    subGraph: {
+                        blocks: editingSubGraph.blocks,
+                        connections: editingSubGraph.connections,
+                        in: b.subGraph?.in || new Map(),
+                        out: b.subGraph?.out || new Map()
+                    }
+                } : b
+            )
+        );
+
+        setEditingSubGraph(null);
     };
 
     return (
@@ -975,6 +1167,9 @@ const handleCanvasClick = () => {
                 <div className="toolbar">
                     <button onClick={handleRunCode} className="run-btn">Запустить</button>
                     <button onClick={handleClearCanvas} className="clear-btn">Очистить</button>
+                    { editingSubGraph && (
+                        <button onClick={handleReturn} className="back-btn">Назад</button>
+                    )}
                 </div>
 
                 <div className="table">
