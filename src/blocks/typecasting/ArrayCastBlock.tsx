@@ -1,6 +1,6 @@
 import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
-export class StringCastBlock implements ExecutableBlock {
+export class ArrayCastBlock implements ExecutableBlock {
     execute(inputs: ExecutionInput, _context: ExecutionContext): ExecutionOutput {
         const value = inputs['in'];
         const splitter = inputs['split'] ?? '';
@@ -17,7 +17,7 @@ export class StringCastBlock implements ExecutableBlock {
         {
             return { out: [] };
         }
-        
+
         return { out: [value] };
     }
 }

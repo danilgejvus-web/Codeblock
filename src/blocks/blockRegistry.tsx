@@ -36,6 +36,10 @@ import { ForEachBlock } from "./logic/ForEachBlock";
 import { FunctionBlock } from "./function/FunctionBlock";
 import { SelfBlock } from "./function/SelfBlock";
 import { CallBlock } from "./function/CallBlock";
+import { StringCastBlock } from "./typecasting/StringCastBlock";
+import { NumCastBlock } from "./typecasting/NumCastBlock";
+import { BooleanCastBlock } from "./typecasting/BooleanCastBlock";
+import { ArrayCastBlock } from "./typecasting/ArrayCastBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     DeclarationNum: {
@@ -315,8 +319,8 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "For",
         class: ForBlock,
         sockets: [
-            {id: "in", type: "input", name: "In"},
-            {id: "out", type: "output", name: "Out"}
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
         ]
     },
     ForEach: {
@@ -324,8 +328,8 @@ export const blockRegistry: Record<string, BlockInfo> = {
         class: ForEachBlock,
         sockets: [
             {id: "arrayName", type: "input", name: "ArrayName"},
-            {id: "in", type: "input", name: "In"},
-            {id: "out", type: "output", name: "Out"}
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
         ]
     },
     FunctionCreation: {
@@ -349,6 +353,38 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "to", type: "input", name: "To"},
             {id: "args", type: "input", name: "Args"},
             {id: "out", type: "output", name: "Out"}
+        ]
+    },
+    StringCast: {
+        name: "StringCast",
+        class: StringCastBlock,
+        sockets: [
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    NumCast: {
+        name: "NumCast",
+        class: NumCastBlock,
+        sockets: [
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    BooleanCast: {
+        name: "BooleanCast",
+        class: BooleanCastBlock,
+        sockets: [
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
+        ]
+    },
+    ArrayCast: {
+        name: "ArrayCast",
+        class: ArrayCastBlock,
+        sockets: [
+            {id: "in", type: "input", name: "in"},
+            {id: "out", type: "output", name: "out"}
         ]
     }
 }
