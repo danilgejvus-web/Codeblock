@@ -11,9 +11,9 @@ export class WriteBlock implements ExecutableBlock {
         if (inputs['set'] !== undefined && inputs['setName'] !== undefined) {
             this.variableName = inputs['setName'];
             context.setVariable(this.variableName, inputs['set']);
-            return { value: inputs['set'] };
+            return { value: inputs['set'], completed: true };
         }
 
-        return {};
+        return { completed: true };
     }
 }

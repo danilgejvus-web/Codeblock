@@ -94,17 +94,21 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "Read",
         class: ReadBlock,
         sockets: [
-            {id: "in1", type: "input", name: "varName"},
-            {id: "out", type: "output", name: "val"}
+            {id: "in1", type: "input", name: "VariableName"},
+            {id: "dependency", type: "input", name: "Dependency"},
+            {id: "out", type: "output", name: "value"},
+            {id: "completed", type: "output", name: "Completed"}
         ]
     },
     Write: {
         name: "Write",
         class: WriteBlock,
         sockets: [
-            {id: "set", type: "input", name: "setVal"},
-            {id: "setName", type: "input", name: "varName"},
-            {id: "out", type: "output", name: "val"}
+            {id: "set", type: "input", name: "SetValue"},
+            {id: "setName", type: "input", name: "VariableName"},
+            {id: "dependency", type: "input", name: "Dependency"},
+            {id: "out", type: "output", name: "value"},
+            {id: "completed", type: "output", name: "Completed"}
         ]
     },
     String: {
@@ -258,18 +262,22 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "ReadArray",
         class: ReadArrayBlock,
         sockets: [
-            {id: "in1", type: "input", name: "arrName"},
-            {id: "in2", type: "input", name: "arrInd"},
-            {id: "out", type: "output", name: "val"}
+            {id: "in1", type: "input", name: "ArrayName"},
+            {id: "in2", type: "input", name: "ArrayIndex"},
+            {id: "dependency", type: "input", name: "Dependency"},
+            {id: "out", type: "output", name: "value"},
+            {id: "completed", type: "output", name: "Completed"}
         ]
     },
     WriteArray: {
         name: "WriteArray",
         class: WriteArrayBlock,
         sockets: [
-            {id: "setName", type: "input", name: "arrName"},
-            {id: "setLength", type: "input", name: "arrLen"},
-            {id: "out", type: "output", name: "val"}
+            {id: "setName", type: "input", name: "ArrayName"},
+            {id: "setLength", type: "input", name: "ArrayLength"},
+            {id: "dependency", type: "input", name: "Dependency"},
+            {id: "out", type: "output", name: "value"},
+            {id: "completed", type: "output", name: "Completed"}
         ]
     },
     Expression: {
