@@ -1,7 +1,6 @@
 import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
-import type { BooleanConstantBlock } from "./blocks/variable/BooleanConstantBlock";
 import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
 import type { StringConstantBlock } from "./blocks/variable/StringConstantBlock";
 
@@ -171,6 +170,33 @@ const checkVariableExists = (
     }
 };
 
+const checkSubGraphExists = (
+    block: Block,
+    errors: BlockError[],
+    warnings: BlockError[]
+) => {
+    switch (block.type) {
+        case 'Func':
+            if (block.subGraph === undefined) {
+                warnings.push({
+                    blockId: block.id,
+                    type: 'warning',
+                    message: 'Подграф Func не инициализирован.'
+                });
+            }
+            break;
+        case 'While':
+            if (block.subGraph === undefined) {
+                warnings.push({
+                    blockId: block.id,
+                    type: 'warning',
+                    message: 'Подграф While не инициализирован.'
+                });
+            }
+            break;
+    }
+}
+
 export const validateProgram = (
     blocks: Block[], 
     connections: Connection[],
@@ -256,17 +282,9 @@ export const validateProgram = (
                 checkVariableExists(block, connections, blocks, variables, errors, warnings);
                 break;
             
-            case 'BooleanConstant':
-                const boolInstance = block.instance as BooleanConstantBlock;
-                const boolValue = boolInstance?.getValue();
-                
-                if (typeof boolValue !== 'boolean') {
-                    warnings.push({
-                        blockId: block.id,
-                        type: 'warning',
-                        message: 'Boolean должно содержать булево значение'
-                    });
-                }
+            case 'Func':
+            case 'While':
+                checkSubGraphExists(block, errors, warnings);
                 break;
         }
     });

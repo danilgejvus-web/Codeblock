@@ -3,6 +3,9 @@ import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput
 export class FunctionBlock implements ExecutableBlock {
     execute(inputs: ExecutionInput, context: ExecutionContext): ExecutionOutput {
         const subGraph = context.getSubGraph();
+        if (subGraph === undefined) {
+            throw new Error('Блок функции не содержит подграф.');
+        }
 
         const input = inputs['in'];
         const subContext = context.newSubContext();
