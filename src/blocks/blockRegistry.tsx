@@ -257,7 +257,6 @@ export const blockRegistry: Record<string, BlockInfo> = {
         class: WhileBlock,
         sockets: [
             {id: "in", type: "input", name: "in"},
-            {id: "condition", type: "input", name: "con"},
             {id: "out", type: "output", name: "out"}
         ]
     },
