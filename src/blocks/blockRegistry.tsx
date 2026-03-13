@@ -32,6 +32,7 @@ import { BooleanConstantBlock } from "./variable/BooleanConstantBlock";
 import { BoolDeclarationBlock } from "./variable/BoolDeclarationBlock";
 import { StringDeclarationBlock } from "./variable/StringDeclarationBlock";
 import { ForBlock } from "./logic/ForBlock";
+import { ForEachBlock } from "./logic/ForEachBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     DeclarationNum: {
@@ -312,6 +313,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "For",
         class: ForBlock,
         sockets: [
+            {id: "in", type: "input", name: "In"},
+            {id: "out", type: "output", name: "Out"}
+        ]
+    },
+    ForEach: {
+        name: "ForEach",
+        class: ForEachBlock,
+        sockets: [
+            {id: "arrayName", type: "input", name: "ArrayName"},
             {id: "in", type: "input", name: "In"},
             {id: "out", type: "output", name: "Out"}
         ]
