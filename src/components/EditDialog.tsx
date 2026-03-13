@@ -26,6 +26,8 @@ export const EditDialog: React.FC<EditDialogProps> = ({
     const getTitle = () => {
         switch (block.type) {
             case 'DeclarationNum':
+            case 'BoolDeclaration':
+            case 'StringDeclaration':
                 return 'Объявление переменных';
             case 'NumberConstant':
                 return 'Введите число';
@@ -45,6 +47,8 @@ export const EditDialog: React.FC<EditDialogProps> = ({
     const renderContent = () => {
         switch (block.type) {
             case 'DeclarationNum':
+            case 'BoolDeclaration':
+            case 'StringDeclaration':
                 return (
                     <div style={{ marginBottom: '10px' }}>
                         <label style={{ color: '#D4D4D4', fontSize: '12px', display: 'block', marginBottom: '5px' }}>

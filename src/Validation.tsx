@@ -2,7 +2,7 @@ import type { ExpressionBlock } from "./blocks/arithmetic/ExpressionBlock";
 import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
-import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
+import type { NumDeclarationBlock } from "./blocks/variable/NumDeclarationBlock";
 import type { StringConstantBlock } from "./blocks/variable/StringConstantBlock";
 
 export interface BlockError {
@@ -257,7 +257,9 @@ export const validateProgram = (
                 break;
             
             case 'DeclarationNum':
-                const declInstance = block.instance as DeclarationBlock;
+            case 'BoolDeclaration':
+            case 'StringDeclaration':
+                const declInstance = block.instance as any;
                 const names = declInstance?.getNames() || [];
                 
                 if (names.length === 0) {

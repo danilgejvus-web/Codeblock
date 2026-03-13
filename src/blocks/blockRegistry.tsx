@@ -27,13 +27,25 @@ import { WriteBlock } from "./variable/WriteBlock";
 import { StringConstantBlock } from "./variable/StringConstantBlock";
 import { NumberConstantBlock } from "./variable/NumberConstantBlock";
 import { StringBlock } from "./variable/StringBlock";
-import { DeclarationBlock } from "./variable/DeclarationBlock";
+import { NumDeclarationBlock } from "./variable/NumDeclarationBlock";
 import { BooleanConstantBlock } from "./variable/BooleanConstantBlock";
+import { BoolDeclarationBlock } from "./variable/BoolDeclarationBlock";
+import { StringDeclarationBlock } from "./variable/StringDeclarationBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     DeclarationNum: {
-        name: "DeclarationNum",
-        class: DeclarationBlock,
+        name: "NumDecl",
+        class: NumDeclarationBlock,
+        sockets: []
+    },
+    BoolDeclaration: {
+        name: "BoolDecl",
+        class: BoolDeclarationBlock,
+        sockets: []
+    },
+    StringDeclaration: {
+        name: "StringDecl",
+        class: StringDeclarationBlock,
         sockets: []
     },
     Sum: {

@@ -1,8 +1,8 @@
 import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
-export class DeclarationBlock implements ExecutableBlock {
+export class StringDeclarationBlock implements ExecutableBlock {
     private variableNames: string[] = [];
-    private defaultValue: number = 0;
+    private defaultValue: string = '';
 
     constructor(names: string = '') {
         this.setVariableNames(names);

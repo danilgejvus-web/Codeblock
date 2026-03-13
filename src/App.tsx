@@ -7,10 +7,12 @@ import { execute } from './interpreter';
 import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 import { validateProgram, type BlockError, type ValidationResult } from './Validation';
-import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
+import { NumDeclarationBlock } from './blocks/variable/NumDeclarationBlock';
 import { BooleanConstantBlock } from './blocks/variable/BooleanConstantBlock';
 import { EditDialog } from './components/EditDialog';
 import { ExpressionBlock } from './blocks/arithmetic/ExpressionBlock';
+import { BoolDeclarationBlock } from './blocks/variable/BoolDeclarationBlock';
+import { StringDeclarationBlock } from './blocks/variable/StringDeclarationBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -19,9 +21,11 @@ import { ExpressionBlock } from './blocks/arithmetic/ExpressionBlock';
 // сделать канву подвижной
 // *сделать надписи у призраков по центру
 // *оверлей вокруг диалога
+// *для ...declaration создать отдельный интерфейс вместо any в Validator
 // ещё нам нужно более тщательно отслеживать невыполнимые операции, я так понимаю?
 
-// сделать блоки декларации для bool и string
+// Дебаггер это реализация задержек между выполнением блоков, системы шагов
+//и вывода всего контекста последнего выполненного блока
 // Сделай визуал для While и массивов
 // добавить в expression логические выражения
 // адаптивность при >= 450px
@@ -29,6 +33,8 @@ import { ExpressionBlock } from './blocks/arithmetic/ExpressionBlock';
 // Добавить задержку на исполнение блоков
 // Итерировать массивы и объекты отдельным for
 // приведение типов
+// нужно будет в валидаторе проверять, что While содержит в себе ввод, вывод и continue,
+//а ещё как-то подтянуть проверку на глубину цикла
 
 interface Point {
     x: number;
@@ -86,8 +92,10 @@ function App() {
         if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
         if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Expression'].includes(blockName)) return 'Arithmetic';
         if (['String', 'Number', 'Boolean'].includes(blockName)) return 'Constant';
-        if (['NumVar', 'StringVar', 'BoolVar', 'Read', 'Write', 'DeclarationNum'].includes(blockName)) return 'Variable';
-        if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual', 'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
+        if (['NumVar', 'StringVar', 'BoolVar', 'Read', 'Write', 'NumDecl',
+            'BoolDecl', 'StringDecl'].includes(blockName)) return 'Variable';
+        if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual',
+            'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
         if (['While'].includes(blockName)) return 'Loop';
         return 'Variable';
     }
@@ -102,8 +110,17 @@ function App() {
 
         let sockets = blockInfo.sockets;
 
-        if (block.type === 'DeclarationNum') {
-            const instance = block.instance as DeclarationBlock;
+        if (block.type === 'DeclarationNum' || block.type === 'BoolDeclaration' || block.type === 'StringDeclaration') {
+
+            let instance;
+            if (block.type === 'DeclarationNum') {
+                instance = block.instance as NumDeclarationBlock;
+            } else if (block.type === 'BoolDeclaration') {
+                instance = block.instance as BoolDeclarationBlock;
+            } else {
+                instance = block.instance as StringDeclarationBlock;
+            }
+
             const names = instance?.getNames() || [];
 
             if (names.length === 0) {
@@ -374,8 +391,24 @@ function App() {
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
-                }else if (block.type === 'DeclarationNum') {
-                    const instance = block.instance as DeclarationBlock;
+                } else if (block.type === 'DeclarationNum' || block.type === 'BoolDeclaration' || block.type === 'StringDeclaration') {
+                    let instance;
+                    let blockTitle;
+                    let displayColor = '#D6413E';
+                    
+                    if (block.type === 'DeclarationNum') {
+                        instance = block.instance as NumDeclarationBlock;
+                        blockTitle = 'Declare Num';
+                    } else if (block.type === 'BoolDeclaration') {
+                        instance = block.instance as BoolDeclarationBlock;
+                        blockTitle = 'Declare Bool';
+                        displayColor = '#4CAF50';
+                    } else {
+                        instance = block.instance as StringDeclarationBlock;
+                        blockTitle = 'Declare String';
+                        displayColor = '#2196F3';
+                    }
+                    
                     const names = instance?.getNames() || [];
                     const count = names.length;
                     
@@ -392,13 +425,19 @@ function App() {
                     
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = 'bold 14px Helvetica';
-                    ctx.fillText('Declaration', block.x + 60, block.y + 20);
+                    ctx.fillText(blockTitle, block.x + 60, block.y + 20);
                     
-                    ctx.font = '10px Helvetica';
-                    ctx.fillStyle = '#D6413E';
-                    
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'alphabetic';
+                    if (count > 0) {
+                        ctx.font = '10px Helvetica';
+                        ctx.fillStyle = displayColor;
+                        
+                        const displayNames = names.slice(0, 3).join(', ');
+                        if (names.length > 3) {
+                            ctx.fillText(`${displayNames}...`, block.x + 60, block.y + 40);
+                        } else {
+                            ctx.fillText(displayNames, block.x + 60, block.y + 40);
+                        }
+                    }
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
@@ -561,8 +600,17 @@ function App() {
                         break;
                     }
 
-                    if (block.type === 'DeclarationNum') {
-                        const instance = block.instance as DeclarationBlock;
+                    if (block.type === 'DeclarationNum' || block.type === 'BoolDeclaration' || block.type === 'StringDeclaration') {
+                        let instance;
+
+                        if (block.type === 'DeclarationNum') {
+                            instance = block.instance as NumDeclarationBlock;
+                        } else if (block.type === 'BoolDeclaration') {
+                            instance = block.instance as BoolDeclarationBlock;
+                        } else {
+                            instance = block.instance as StringDeclarationBlock;
+                        }
+
                         setEditingBlockId(block.id);
                         setEditValue(instance.getNamesString());
                         break;
@@ -613,7 +661,23 @@ function App() {
             });
         } else if (block.id === 'DeclarationNum') {
             console.log('Creating DeclarationBlock');
-            const instance = new DeclarationBlock();
+            const instance = new NumDeclarationBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'BoolDeclaration') {
+            const instance = new BoolDeclarationBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'StringDeclaration') {
+            const instance = new StringDeclarationBlock();
             setDraggedBlock({
                 type: block.typeId,
                 name: block.name,
@@ -921,7 +985,10 @@ const handleCanvasClick = () => {
                         const block = blocks.find(b => b.id === editingBlockId);
                         if (!block) return;
 
-                        if (block.instance instanceof DeclarationBlock) {
+                        if (block.instance instanceof NumDeclarationBlock ||
+                            block.instance instanceof BoolDeclarationBlock ||
+                            block.instance instanceof StringDeclarationBlock)
+                        {
                             block.instance.setNames(editValue);
                         } else if (block.instance instanceof StringConstantBlock) {
                             block.instance.setName(editValue);
