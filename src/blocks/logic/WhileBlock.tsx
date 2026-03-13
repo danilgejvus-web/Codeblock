@@ -3,6 +3,9 @@ import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput
 export class WhileBlock implements ExecutableBlock {
     execute(inputs: ExecutionInput, context: ExecutionContext): ExecutionOutput {
         const subGraph = context.getSubGraph();
+        if (subGraph === undefined) {
+            throw new Error('Блок While не содержит подграф.');
+        }
 
         const input = inputs['in'];
         let currentState = input;
