@@ -2,7 +2,8 @@ import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
 import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
-import type { NameBlock } from "./blocks/variable/StringConstantBlock";
+import type { StringConstantBlock } from "./blocks/variable/StringConstantBlock";
+
 
 export interface BlockError {
     blockId: string;
@@ -155,8 +156,8 @@ const checkVariableExists = (
     const nameBlock = blocks.find(b => b.id === nameConn.fromBlockID);
     if (!nameBlock) return;
 
-    if (nameBlock.type === 'Name') {
-        const instance = nameBlock.instance as NameBlock;
+    if (nameBlock.type === 'StringConstant') {
+        const instance = nameBlock.instance as StringConstantBlock;
         const varName = instance?.getName();
         
         if (varName && variables[varName] === undefined) {
@@ -169,6 +170,33 @@ const checkVariableExists = (
         }
     }
 };
+
+const checkSubGraphExists = (
+    block: Block,
+    errors: BlockError[],
+    warnings: BlockError[]
+) => {
+    switch (block.type) {
+        case 'Func':
+            if (block.subGraph === undefined) {
+                warnings.push({
+                    blockId: block.id,
+                    type: 'warning',
+                    message: 'Подграф Func не инициализирован.'
+                });
+            }
+            break;
+        case 'While':
+            if (block.subGraph === undefined) {
+                warnings.push({
+                    blockId: block.id,
+                    type: 'warning',
+                    message: 'Подграф While не инициализирован.'
+                });
+            }
+            break;
+    }
+}
 
 export const validateProgram = (
     blocks: Block[], 
@@ -253,6 +281,11 @@ export const validateProgram = (
 
             case 'Read':
                 checkVariableExists(block, connections, blocks, variables, errors, warnings);
+                break;
+            
+            case 'Func':
+            case 'While':
+                checkSubGraphExists(block, errors, warnings);
                 break;
         }
     });
