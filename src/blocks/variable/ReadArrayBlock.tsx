@@ -9,6 +9,9 @@ export class ReadArrayBlock implements ExecutableBlock {
             const index = inputs['getIndex'];
             
             const array = context.getVariable(name);
+            if (!array || !Array.isArray(array)) {
+                throw new Error('ReadArray был вызван для несуществующего массива.');
+            }
             
             if (array && Array.isArray(array) && index >= 0 && index < array.length) {
                 outputs['value'] = array[index];

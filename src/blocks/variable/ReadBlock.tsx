@@ -11,7 +11,11 @@ export class ReadBlock implements ExecutableBlock {
         if (inputs['in1'] !== undefined) {
             this.variableName = inputs['in1'];
             const value = context.getVariable(this.variableName);
-            return { value: value, completed: true };
+            if (value) {
+                return { value: value, completed: true };
+            } else {
+                throw new Error('Read был вызван для несуществующей переменной.');
+            }
         }
 
         return { completed: true };
