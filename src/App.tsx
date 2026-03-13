@@ -13,6 +13,9 @@ import { EditDialog } from './components/EditDialog';
 import { ExpressionBlock } from './blocks/arithmetic/ExpressionBlock';
 import { BoolDeclarationBlock } from './blocks/variable/BoolDeclarationBlock';
 import { StringDeclarationBlock } from './blocks/variable/StringDeclarationBlock';
+import { NumArrayBlock } from './blocks/variable/NumArrayBlock';
+import { ReadArrayBlock } from './blocks/variable/ReadArrayBlock';
+import { WriteArrayBlock } from './blocks/variable/WriteArrayBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -35,6 +38,8 @@ import { StringDeclarationBlock } from './blocks/variable/StringDeclarationBlock
 // приведение типов
 // нужно будет в валидаторе проверять, что While содержит в себе ввод, вывод и continue,
 //а ещё как-то подтянуть проверку на глубину цикла
+// рефактор апп
+// передвижение канвы
 
 interface Point {
     x: number;
@@ -692,8 +697,32 @@ function App() {
                 blockType: block.id,
                 instance: instance
             });
-        }
-        else {
+        } else if (block.id === 'NumArray') {
+            console.log('Creating NumArrayBlock');
+            const instance = new NumArrayBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'ReadArray') {
+            const instance = new ReadArrayBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else if (block.id === 'WriteArray') {
+            const instance = new WriteArrayBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        } else {
             new blockInfo.class();
             setDraggedBlock({
                 type: block.typeId,

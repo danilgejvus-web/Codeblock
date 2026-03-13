@@ -1,21 +1,29 @@
-import type { ExecutableBlock, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
+import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
 export class WriteArrayBlock implements ExecutableBlock {
-    private variableName: string;
-    private index: number;
-
-    constructor(name: string = 'var', index: number = 0) {
-        this.variableName = name;
-        this.index = index;
-    }
-
-    execute(inputs: ExecutionInput, context: { setVariable: (name: string, index: number, value: any) => void }): ExecutionOutput {
-        if (inputs['set'] !== undefined && inputs['setName'] !== undefined) {
-            this.variableName = inputs['setName'];
-            this.index = inputs['index'];
-            context.setVariable(this.variableName, this.index, inputs['set']);
+    execute(inputs: ExecutionInput, context: ExecutionContext): ExecutionOutput {
+        const outputs: ExecutionOutput = {};
+        
+        if (inputs['setName'] !== undefined && 
+            inputs['setIndex'] !== undefined && 
+            inputs['setValue'] !== undefined) {
+            
+            const name = inputs['setName'];
+            const index = inputs['setIndex'];
+            const value = inputs['setValue'];
+            
+            const array = context.getVariable(name);
+            
+            if (array && Array.isArray(array) && index >= 0 && index < array.length) {
+                array[index] = value;
+                
+                context.setVariable(name, array);
+                
+                outputs['value'] = value;
+                outputs['array'] = array;
+            }
         }
-
-        return { value: inputs['set'], completed: true };
+        
+        return outputs;
     }
 }

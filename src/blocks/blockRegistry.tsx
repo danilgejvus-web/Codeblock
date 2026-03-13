@@ -261,34 +261,33 @@ export const blockRegistry: Record<string, BlockInfo> = {
         ]
     },
     NumArray: {
-    name: "NumArray",
+        name: "NumArray",
         class: NumArrayBlock,
         sockets: [
-            {id: "setName", type: "input", name: "setName"},
-            {id: "setLength", type: "input", name: "setLen"},
-            {id: "out", type: "output", name: "val"}
+            {id: "setName", type: "input", name: "name" },
+            {id: "setLength", type: "input", name: "len" },
+            {id: "value", type: "output", name: "array" },
+            {id: "name", type: "output", name: "arrayName" }
         ]
     },
     ReadArray: {
         name: "ReadArray",
         class: ReadArrayBlock,
         sockets: [
-            {id: "in1", type: "input", name: "ArrayName"},
-            {id: "in2", type: "input", name: "ArrayIndex"},
-            {id: "dependency", type: "input", name: "Dependency"},
-            {id: "out", type: "output", name: "value"},
-            {id: "completed", type: "output", name: "Completed"}
+            {id: "getName", type: "input", name: "name" },
+            {id: "getIndex", type: "input", name: "index" },
+            {id: "value", type: "output", name: "value" }
         ]
     },
     WriteArray: {
         name: "WriteArray",
         class: WriteArrayBlock,
         sockets: [
-            {id: "setName", type: "input", name: "ArrayName"},
-            {id: "setLength", type: "input", name: "ArrayLength"},
-            {id: "dependency", type: "input", name: "Dependency"},
-            {id: "out", type: "output", name: "value"},
-            {id: "completed", type: "output", name: "Completed"}
+            {id: "setName", type: "input", name: "name" },
+            {id: "setIndex", type: "input", name: "index" },
+            {id: "setValue", type: "input", name: "value" },
+            {id: "value", type: "output", name: "written" },
+            {id: "array", type: "output", name: "name" }
         ]
     },
     Expression: {

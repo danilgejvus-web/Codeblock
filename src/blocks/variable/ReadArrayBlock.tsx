@@ -1,22 +1,20 @@
-import type { ExecutableBlock, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
+import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
 export class ReadArrayBlock implements ExecutableBlock {
-    private variableName: string;
-    private index: number;
-
-    constructor(name: string = 'var', index: number = 0) {
-        this.variableName = name;
-        this.index = index;
-    }
-
-    execute(inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
-        if (inputs['in1'] !== undefined) {
-            this.variableName = inputs['in1'];
-            this.index = inputs['in2'];
-            const value = context.getVariable(this.variableName)[this.index];
-            return { value: value, completed: true };
+    execute(inputs: ExecutionInput, context: ExecutionContext): ExecutionOutput {
+        const outputs: ExecutionOutput = {};
+        
+        if (inputs['getName'] !== undefined && inputs['getIndex'] !== undefined) {
+            const name = inputs['getName'];
+            const index = inputs['getIndex'];
+            
+            const array = context.getVariable(name);
+            
+            if (array && Array.isArray(array) && index >= 0 && index < array.length) {
+                outputs['value'] = array[index];
+            }
         }
-
-        return { completed: true };
+        
+        return outputs;
     }
 }
