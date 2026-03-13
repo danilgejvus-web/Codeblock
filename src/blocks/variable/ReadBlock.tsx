@@ -1,4 +1,4 @@
-import type { ExecutableBlock, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
+import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
 export class ReadBlock implements ExecutableBlock {
     private variableName: string;
@@ -7,7 +7,7 @@ export class ReadBlock implements ExecutableBlock {
         this.variableName = name;
     }
 
-    execute(inputs: ExecutionInput, context: { getVariable: (name: string) => any }): ExecutionOutput {
+    execute(inputs: ExecutionInput, context: ExecutionContext ): ExecutionOutput {
         if (inputs['in1'] !== undefined) {
             this.variableName = inputs['in1'];
             const value = context.getVariable(this.variableName);
