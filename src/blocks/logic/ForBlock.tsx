@@ -20,11 +20,11 @@ export class ForBlock implements ExecutableBlock {
 
         const subContext = context.newSubContext();
 
-        const iterate = (state: any): any => {
+        const iterate = (state: any, context: ExecutionContext): any => {
             const conditionInputs = new Map<string, any>();
             conditionInputs.set(conditionInputID, state);
 
-            const conditionOutputs = context.executeSubGraph(this.conditionSubGraph!, conditionInputs, subContext);
+            const conditionOutputs = context.executeSubGraph(this.conditionSubGraph!, conditionInputs, context);
             const shouldContinue = conditionOutputs.get(conditionOutputID);
 
             if (!shouldContinue) {
@@ -34,13 +34,13 @@ export class ForBlock implements ExecutableBlock {
             const inputs = new Map<string, any>();
             inputs.set(inputID, state);
 
-            const outputs = context.executeSubGraph(this.subGraph!, inputs, subContext);
+            const outputs = context.executeSubGraph(this.subGraph!, inputs, context);
             const nextState = outputs.get(outputID);
 
-            return iterate(nextState);
+            return iterate(nextState, context);
         }
 
-        const outState = iterate(inState);
+        const outState = iterate(inState, subContext);
         return { out: outState };
     }
 
