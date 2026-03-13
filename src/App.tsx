@@ -10,16 +10,9 @@ import { validateProgram, type BlockError, type ValidationResult } from './Valid
 import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
 
 //TO DO
-// !разбить блоки по категориям. Добавить категории Write and Read?
-// !обработчик ошибок
-// !сделать Num только для объявления переменной без присваивания?
-// сделать блок declarNum
-// +почему-то не работает sum / теперь работает
-// *добавить возможность массового выделения блоков и их удаления
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
 // *избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
 // *можно ещё блок вывода сделать, чтобы потом не весь результат выводить
-// сделать название блока посередине
 // -баг у текста output в блоке NumConstant: маленький текст
 // сделать канву подвижной
 // сделать надписи у призраков по центру
@@ -83,9 +76,7 @@ function App() {
     function getBlockType(blockName: string): string {
         if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
         if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Expression'].includes(blockName)) return 'Arithmetic';
-
         if (['String', 'Number'].includes(blockName)) return 'Constant';
-
         if (['NumVar', 'StringVar', 'BoolVar', 'Read', 'Write', 'DeclarationNum'].includes(blockName)) return 'Variable';
         if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual', 'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
         if (['While'].includes(blockName)) return 'Loop';
