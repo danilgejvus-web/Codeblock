@@ -16,6 +16,7 @@ import { StringDeclarationBlock } from './blocks/variable/StringDeclarationBlock
 import { NumArrayBlock } from './blocks/variable/NumArrayBlock';
 import { ReadArrayBlock } from './blocks/variable/ReadArrayBlock';
 import { WriteArrayBlock } from './blocks/variable/WriteArrayBlock';
+import { LocalExecutionContext } from './storages/LocalExecutionContext';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -924,16 +925,8 @@ const handleCanvasClick = () => {
 
     const handleRunCode = () => {
         try {
-            const context = {
-                getVariable: (name: string) => {
-                    console.log(`Чтение переменной "${name}":`, variables[name]);
-                    return variables[name];
-                },
-                setVariable: (name: string, value: any) => {
-                    console.log(`Запись переменной "${name}" =`, value);
-                    setVariables(prev => ({ ...prev, [name]: value }));
-                }
-            };
+            const blockMap = new Map(blocks.map(b => [b.id, b.instance!]));
+            const context = new LocalExecutionContext(blockMap);
 
             console.log('Запуск интерпретатора...');
             console.log('Блоков:', blocks.length);
