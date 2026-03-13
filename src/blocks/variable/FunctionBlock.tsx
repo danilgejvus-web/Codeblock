@@ -11,6 +11,6 @@ export class FunctionBlock implements ExecutableBlock {
         const subOutputID = subGraph.out.get('out');
         const subOutput = subOuts.get(subOutputID!);
 
-        return { outputs: subOutput };
+        return { out: subOutput };
     }
 }
