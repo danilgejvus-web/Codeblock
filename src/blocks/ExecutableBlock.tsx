@@ -20,8 +20,9 @@ export interface ExecutionContext {
     getVariable(name: string): any;
     setVariable(name: string, value: any): void;
     setVariable(name: string, index: number, value: any): void;
-    getSubGraph(): SubGraph;
+    getSubGraph(): SubGraph | undefined;
     newSubContext(): ExecutionContext;
+    newSubContext(subGraph?: SubGraph): ExecutionContext;
     executeSubGraph(subGraph: SubGraph, inputs: Map<string, any>, newContext: ExecutionContext): Map<string, any>;
 }
 

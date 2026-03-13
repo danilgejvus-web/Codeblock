@@ -1,10 +1,11 @@
 import type { ExecutionInput, ExecutionOutput, Connection } from "./blocks/ExecutableBlock";
 import type { Block } from './blocks/BlockMetadata';
+import type { LocalExecutionContext } from "./storages/LocalExecutionContext";
 
 export function execute(
     blocks: Block[],
     connections: Connection[],
-    context: { getVariable: any; setVariable: any; getSubGraph: any; newSubContext: any; executeSubGraph: any; },
+    context: LocalExecutionContext,
 )
 : Map<string, ExecutionOutput> 
 {
@@ -59,17 +60,19 @@ export function execute(
             }
         });
 
-        if (block.subGraph) {
-            const subInput = new Map<string, any>();
-            block.subGraph.in.forEach((inputBlockID, socketID) => {
-                const inValue = inputs[socketID];
-                if (inValue !== undefined) {
-                    subInput.set(inputBlockID, inValue);
-                }
-            })
-        }
+        // if (block.subGraph) {
+        //     const subInput = new Map<string, any>();
+        //     block.subGraph.in.forEach((inputBlockID, socketID) => {
+        //         const inValue = inputs[socketID];
+        //         if (inValue !== undefined) {
+        //             subInput.set(inputBlockID, inValue);
+        //         }
+        //     })
+        // }
 
-        const output = instance!.execute(inputs, context);
+        const subContext = block.subGraph ? (context as LocalExecutionContext).newSubContext(block.subGraph): context;
+
+        const output = instance!.execute(inputs, subContext);
         outputs.set(blockID, output);
     });
 

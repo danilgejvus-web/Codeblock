@@ -1,14 +1,14 @@
 import type { SubGraph, Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
-import type { ExecutionContext } from "./blocks/ExecutableBlock";
 import { ShadowConstantBlock } from "./blocks/variable/ShadowConstantBlock";
 import { execute } from "./interpreter";
+import type { LocalExecutionContext } from "./storages/LocalExecutionContext";
 
 
 export function executeSubGraphWithShadow(
     subGraph: SubGraph,
     inputs: Map<string, any>,
-    context: ExecutionContext
+    context: LocalExecutionContext
 ): Map<string, any>
 {
     const blocks: Block[] = subGraph.blocks.map(b => {
