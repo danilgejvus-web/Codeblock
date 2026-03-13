@@ -20,6 +20,9 @@ export interface ExecutionContext {
     getVariable(name: string): any;
     setVariable(name: string, value: any): void;
     setVariable(name: string, index: number, value: any): void;
+    getBlock(blockID: string): ExecutableBlock;
+    setSelfFunctionID(id: string): void;
+    getSelfFunctionID(): string;
     getSubGraph(): SubGraph | undefined;
     newSubContext(): ExecutionContext;
     newSubContext(subGraph?: SubGraph): ExecutionContext;

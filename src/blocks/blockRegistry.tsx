@@ -33,6 +33,9 @@ import { BoolDeclarationBlock } from "./variable/BoolDeclarationBlock";
 import { StringDeclarationBlock } from "./variable/StringDeclarationBlock";
 import { ForBlock } from "./logic/ForBlock";
 import { ForEachBlock } from "./logic/ForEachBlock";
+import { FunctionBlock } from "./function/FunctionBlock";
+import { SelfBlock } from "./function/SelfBlock";
+import { CallBlock } from "./function/CallBlock";
 
 export const blockRegistry: Record<string, BlockInfo> = {
     DeclarationNum: {
@@ -322,6 +325,29 @@ export const blockRegistry: Record<string, BlockInfo> = {
         sockets: [
             {id: "arrayName", type: "input", name: "ArrayName"},
             {id: "in", type: "input", name: "In"},
+            {id: "out", type: "output", name: "Out"}
+        ]
+    },
+    FunctionCreation: {
+        name: "Function",
+        class: FunctionBlock,
+        sockets: [
+            {id: "id", type: "output", name: "ID"}
+        ]
+    },
+    Self: {
+        name: "Self",
+        class: SelfBlock,
+        sockets: [
+            {id: "id", type: "output", name: "ID"}
+        ]
+    },
+    Call: {
+        name: "Call",
+        class: CallBlock,
+        sockets: [
+            {id: "to", type: "input", name: "To"},
+            {id: "args", type: "input", name: "Args"},
             {id: "out", type: "output", name: "Out"}
         ]
     }

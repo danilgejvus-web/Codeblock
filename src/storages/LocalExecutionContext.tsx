@@ -1,4 +1,4 @@
-import type { ExecutionContext } from "../blocks/ExecutableBlock";
+import type { ExecutableBlock, ExecutionContext } from "../blocks/ExecutableBlock";
 import type { SubGraph } from "../blocks/BlockMetadata";
 import { executeSubGraphWithShadow } from "../subInterpreter";
 
@@ -6,10 +6,14 @@ export class LocalExecutionContext implements ExecutionContext {
     private variables: Map<string, any> = new Map();
     private global?: LocalExecutionContext;
     private subGraph?: SubGraph;
+    private blockMap: Map<string ,ExecutableBlock>;
+    private functionID?: string;
 
-    constructor (global?: LocalExecutionContext, subGraph?: SubGraph) {
+    constructor (blockMap: Map<string, ExecutableBlock>, global?: LocalExecutionContext, subGraph?: SubGraph, functionID?: string) {
+        this.blockMap = blockMap;
         this.global = global;
         this.subGraph = subGraph;
+        this.functionID = functionID;
     }
 
     getVariable(name: string): any {
@@ -33,12 +37,34 @@ export class LocalExecutionContext implements ExecutionContext {
         }
     }
 
+    getBlock(blockID: string): ExecutableBlock {
+        const block = this.blockMap.get(blockID);
+        if (!block) {
+            throw new Error(`Block with ID ${blockID} not found`);
+        }
+        return block;
+    }
+
+    setSelfFunctionID(id: string): void {
+        this.functionID = id;
+    }
+
+    getSelfFunctionID(): string {
+        if (this.functionID) {
+            return this.functionID;
+        }
+        if (this.global) {
+            return this.global.getSelfFunctionID();
+        }
+        throw new Error('Нет функции в области видимости.');
+    }
+
     getSubGraph(): SubGraph | undefined {
         return this.subGraph;
     }
 
-    newSubContext(subGraph?: SubGraph): ExecutionContext {
-        return new LocalExecutionContext(this, subGraph);
+    newSubContext(subGraph?: SubGraph, functionID?: string): ExecutionContext {
+        return new LocalExecutionContext(this.blockMap, this, subGraph, functionID);
     }
 
     executeSubGraph(subGraph: SubGraph, inputs: Map<string, any>, newContext: LocalExecutionContext): Map<string, any> {

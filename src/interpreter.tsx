@@ -70,7 +70,7 @@ export function execute(
         //     })
         // }
 
-        const subContext = block.subGraph ? (context as LocalExecutionContext).newSubContext(block.subGraph): context;
+        const subContext = block.subGraph ? (context as LocalExecutionContext).newSubContext(block.subGraph, block.id): context;
 
         const output = instance!.execute(inputs, subContext);
         outputs.set(blockID, output);
