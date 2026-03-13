@@ -14,13 +14,13 @@ export class ExpressionBlock implements ExecutableBlock {
         const subGraph = context.getSubGraph();
         const input = inputs['in'];
 
-        const stateInputID = subGraph.in.get('in');
-        const nextStateOutputID = subGraph.out.get('out');
+        const stateInputID = subGraph!.in.get('in');
+        const nextStateOutputID = subGraph!.out.get('out');
 
         const subInputs = new Map<string, any>();
         subInputs.set(stateInputID!, input);
 
-        const subOuts = context.executeSubGraph(subGraph, subInputs, context);
+        const subOuts = context.executeSubGraph(subGraph!, subInputs, context);
         const result = subOuts.get(nextStateOutputID!);
 
         return { out: result };
