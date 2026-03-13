@@ -94,6 +94,38 @@ export const EditDialog: React.FC<EditDialogProps> = ({
                     </div>
                 );
 
+            case 'Expression':
+                return (
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ color: '#D4D4D4', fontSize: '12px', display: 'block', marginBottom: '5px' }}>
+                            Введите арифметическое выражение:
+                        </label>
+                        <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => onEditValueChange(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            style={{
+                                background: '#1E1E1E',
+                                color: '#D4D4D4',
+                                border: '1px solid #D6413E',
+                                padding: '8px',
+                                width: '100%',
+                                fontFamily: 'monospace',
+                            }}
+                            placeholder="x + y * 2"
+                            autoFocus
+                        />
+                        <div style={{ 
+                            color: '#868686', 
+                            fontSize: '10px', 
+                            marginTop: '5px' 
+                        }}>
+                            Поддерживаются: + - * / % ( ) и переменные
+                        </div>
+                    </div>
+                );
+
             default:
                 return (
                     <input

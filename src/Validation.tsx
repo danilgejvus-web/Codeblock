@@ -1,3 +1,4 @@
+import type { ExpressionBlock } from "./blocks/arithmetic/ExpressionBlock";
 import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
@@ -285,6 +286,19 @@ export const validateProgram = (
             case 'Func':
             case 'While':
                 checkSubGraphExists(block, errors, warnings);
+                break;
+
+            case 'Expression':
+                const exprInstance = block.instance as ExpressionBlock;
+                const expr = exprInstance.getExpression ? exprInstance.getExpression() : '';
+                
+                if (!expr || expr.trim() === '') {
+                    warnings.push({
+                        blockId: block.id,
+                        type: 'warning',
+                        message: 'Expression блок не содержит выражения'
+                    });
+                }
                 break;
         }
     });

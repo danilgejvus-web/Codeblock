@@ -42,6 +42,10 @@ export class ExpressionBlock implements ExecutableBlock {
         this.expression = newExpression;
     }
 
+    public getExpression(): string {
+        return this.expression;
+    }
+
     private tokenize(expression: string): Token[] {
         const regex = /\s*([0-9]+\.?[0-9]*|[a-zA-Z_][a-zA-Z0-9_]*|[+-/*%()])\s*/g
         const tokens: Token[] = [];
@@ -191,5 +195,9 @@ export class ExpressionBlock implements ExecutableBlock {
 
         const lastBlock = blocks.find((bl => bl.id === stack[0]));
         return { blocks: blocks, connections: connections, in: inputBlocks, out: new Map([[lastBlock!.name, lastBlock!.id]]) }
+    }
+
+    constructor(expression: string = '') {
+        this.expression = expression;
     }
 }

@@ -115,21 +115,21 @@ export const blockRegistry: Record<string, BlockInfo> = {
         name: "String",
         class: StringConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "str" }
+            {id: "value", type: "output", name: "str" }
         ]
     },
     NumberConstant: {
         name: "Number",
         class: NumberConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "val" }
+            {id: "value", type: "output", name: "val" }
         ]
     },
     BooleanConstant: {
         name: "Boolean",
         class: BooleanConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "val" }
+            {id: "value", type: "output", name: "val" }
         ]
     },
     If: {

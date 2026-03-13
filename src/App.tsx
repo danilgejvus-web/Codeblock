@@ -10,17 +10,25 @@ import { validateProgram, type BlockError, type ValidationResult } from './Valid
 import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
 import { BooleanConstantBlock } from './blocks/variable/BooleanConstantBlock';
 import { EditDialog } from './components/EditDialog';
+import { ExpressionBlock } from './blocks/arithmetic/ExpressionBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
 // *можно ещё блок вывода сделать, чтобы потом не весь результат выводить
 // -баг у текста output в блоке NumConstant: маленький текст
 // сделать канву подвижной
-// сделать надписи у призраков по центру
-// оверлей вокруг диалога
+// *сделать надписи у призраков по центру
+// *оверлей вокруг диалога
+// ещё нам нужно более тщательно отслеживать невыполнимые операции, я так понимаю?
 
 // сделать блоки декларации для bool и string
 // Сделай визуал для ExpressionBlock, While и массивов
+// добавить в expression логические выражения
+// адаптивность при >= 450px
+// Использовать псевдоэлементы и псевдоселекторы (если ещё не было) просто чтобы были
+// Добавить задержку на исполнение блоков
+// Итерировать массивы и объекты отдельным for
+// приведение типов
 
 interface Point {
     x: number;
@@ -394,6 +402,32 @@ function App() {
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
+                } else if (block.type === 'Expression') {
+                    const instance = block.instance as ExpressionBlock;
+                    const expr = instance.getExpression ? instance.getExpression() : '';
+                    
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    ctx.fillStyle = '#D4D4D4';
+                    ctx.font = 'bold 14px Helvetica';
+                    ctx.fillText('Expression', block.x + 60, block.y + 15);
+                    
+                    ctx.font = '10px Helvetica';
+                    ctx.fillStyle = '#D6413E';
+                    
+                    let displayExpr = expr;
+                    if (displayExpr.length > 12) {
+                        displayExpr = displayExpr.substring(0, 10) + '...';
+                    }
+                    ctx.fillText(displayExpr || 'x + y', block.x + 60, block.y + 35);
+                    
+                    ctx.font = '8px Helvetica';
+                    ctx.fillStyle = '#868686';
+                    ctx.fillText('double-click to edit', block.x + 60, block.y + 50);
+                    
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
                 } else {
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = '14px Helvetica';
@@ -533,6 +567,13 @@ function App() {
                         setEditValue(instance.getNamesString());
                         break;
                     }
+
+                    if (block.type === 'Expression') {
+                        const instance = block.instance as ExpressionBlock;
+                        setEditingBlockId(block.id);
+                        setEditValue(instance.getExpression ? instance.getExpression() : '');
+                        break;
+                    }
                 }
             }
         };
@@ -579,7 +620,16 @@ function App() {
                 blockType: block.id,
                 instance: instance
             });
-        } else {
+        } else if (block.id === 'Expression') {
+            const instance = new ExpressionBlock('');
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance
+            });
+        }
+        else {
             new blockInfo.class();
             setDraggedBlock({
                 type: block.typeId,
@@ -880,6 +930,8 @@ const handleCanvasClick = () => {
                             block.instance.setValue(numValue);
                         } else if (block.instance instanceof BooleanConstantBlock) {
                             block.instance.setValue(editValue === 'true');
+                        } else if (block.instance instanceof ExpressionBlock) {
+                            block.instance.setExpression(editValue);
                         }
 
                         setBlocks([...blocks]);
