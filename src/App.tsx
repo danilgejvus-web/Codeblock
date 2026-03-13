@@ -21,7 +21,6 @@ import { EditDialog } from './components/EditDialog';
 // оверлей вокруг диалога
 
 // сделать блоки декларации для bool и string
-// сделать bool константу
 // Сделай визуал для ExpressionBlock, While и массивов
 
 interface Point {
