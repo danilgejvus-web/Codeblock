@@ -1,6 +1,9 @@
 import type { SubGraph, Block } from "../BlockMetadata";
+import { blockRegistry } from "../blockRegistry";
 import type { Connection } from "../ExecutableBlock";
 import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
+import { NumberConstantBlock } from "../variable/NumberConstantBlock";
+import { ReadBlock } from "../variable/ReadBlock";
 
 type Token = { type: 'number'; value: number; }
 | { type: 'variable'; name: string}
@@ -123,12 +126,29 @@ export class ExpressionBlock implements ExecutableBlock {
     }
 
     private toGraph(rpn: (Token & { type: 'number' | 'variable' | 'operator' })[]): SubGraph {
-        const createBlock = (name: string, type: string, value?: any): Block => ({
+        const createBlock = (name: string, type: string): Block => ({
             id: Date.now().toString(),
             type: type,
             name: name,
             x: 0,
-            y: 0
+            y: 0,
+            instance: new blockRegistry[name].class
+        });
+        const createConstantBlock = (name: string, type: string, value: number): Block => ({
+            id: Date.now().toString(),
+            type: type,
+            name: name,
+            x: 0,
+            y: 0,
+            instance: new NumberConstantBlock(value)
+        });
+        const createVariableBlock = (name: string, type: string, variableName: string): Block => ({
+            id: Date.now().toString(),
+            type: type,
+            name: name,
+            x: 0,
+            y: 0,
+            instance: new ReadBlock(variableName)
         });
 
         const createConnection = (fromBlockID: string, fromSocketID: string, toBlockID: string, toSocketID: string): Connection => ({
@@ -148,7 +168,7 @@ export class ExpressionBlock implements ExecutableBlock {
         {
             if (token.type === 'number')
             {
-                const constantBlock = createBlock('Constant', 'Constant', { value: token.value });
+                const constantBlock = createConstantBlock('NumberConstant', 'NumberConstant', token.value);
                 blocks.push(constantBlock);
                 stack.push(constantBlock.id);
             }
@@ -156,7 +176,7 @@ export class ExpressionBlock implements ExecutableBlock {
             {
                 let inputID = inputBlocks.get(token.name);
                 if (!inputID) {
-                    const readBlock = createBlock('Read', 'Read', { variableName: token.name });
+                    const readBlock = createVariableBlock('Read', 'Read', token.name);
                     blocks.push(readBlock);
                     inputID = readBlock.id;
                     inputBlocks.set(token.name, inputID);
