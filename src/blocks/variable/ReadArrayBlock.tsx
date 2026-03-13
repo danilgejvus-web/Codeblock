@@ -14,9 +14,9 @@ export class ReadArrayBlock implements ExecutableBlock {
             this.variableName = inputs['in1'];
             this.index = inputs['in2'];
             const value = context.getVariable(this.variableName)[this.index];
-            return { value: value };
+            return { value: value, completed: true };
         }
 
-        return {};
+        return { completed: true };
     }
 }

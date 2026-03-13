@@ -11,9 +11,9 @@ export class ReadBlock implements ExecutableBlock {
         if (inputs['in1'] !== undefined) {
             this.variableName = inputs['in1'];
             const value = context.getVariable(this.variableName);
-            return { value: value };
+            return { value: value, completed: true };
         }
 
-        return {};
+        return { completed: true };
     }
 }

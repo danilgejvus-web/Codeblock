@@ -14,9 +14,8 @@ export class WriteArrayBlock implements ExecutableBlock {
             this.variableName = inputs['setName'];
             this.index = inputs['index'];
             context.setVariable(this.variableName, this.index, inputs['set']);
-            return { value: inputs['set'] };
         }
 
-        return {};
+        return { value: inputs['set'], completed: true };
     }
 }
