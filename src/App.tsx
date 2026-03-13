@@ -4,7 +4,7 @@ import type { Block } from './blocks/BlockMetadata';
 import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
-import { NameBlock } from './blocks/variable/NameBlock';
+import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 import { validateProgram, type BlockError, type ValidationResult } from './Validation';
 import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
@@ -18,13 +18,15 @@ import { DeclarationBlock } from './blocks/variable/DeclarationBlock';
 // *добавить возможность массового выделения блоков и их удаления
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
 // *избавиться от блока Read и сразу передавать имя, а доставать значение по нему в нужных пинах
-// а ещё я предлагаю VarName и NumberConstant переименовать в String и Number
-// и вынести их в отдельный от Var блок, в тип constant
 // *можно ещё блок вывода сделать, чтобы потом не весь результат выводить
 // сделать название блока посередине
 // -баг у текста output в блоке NumConstant: маленький текст
 // сделать канву подвижной
 // сделать надписи у призраков по центру
+
+// сделать блоки декларации для bool и string
+// сделать bool константу
+// Сделай визуал для ExpressionBlock, While и массивов
 
 interface Point {
     x: number;
@@ -63,11 +65,12 @@ function App() {
     const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
 
     const blockTypes = [
-        { id: 'Var', name: 'Var' },
+        { id: 'Array', name: 'Array' },
         { id: 'Arithmetic', name: 'Arithmetic' },
+        { id: 'Constant', name: 'Constant' },
+        { id: 'Variable', name: 'Variable' },
         { id: 'Logic', name: 'Logic' },
         { id: 'Loop', name: 'Loop' },
-        { id: 'Array', name: 'Array' },
     ];
 
     const blockNames = Object.entries(blockRegistry).map(([id, info]) => ({
@@ -78,12 +81,15 @@ function App() {
     }));
 
     function getBlockType(blockName: string): string {
-        if (['Num', 'Read', 'Write', 'Name', 'NumberConstant', 'DeclarationNum'].includes(blockName)) return 'Var';
-        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Greater'].includes(blockName)) return 'Arithmetic';
-        if (['If', 'EndIf', 'Not', 'Or', 'And'].includes(blockName)) return 'Logic';
-        if (['While'].includes(blockName)) return 'Loop';
         if (['NumArray', 'ReadArray', 'WriteArray'].includes(blockName)) return 'Array';
-        return 'Var';
+        if (['Sum', 'Sub', 'Mul', 'Div', 'Mod', 'Expression'].includes(blockName)) return 'Arithmetic';
+
+        if (['String', 'Number'].includes(blockName)) return 'Constant';
+
+        if (['NumVar', 'StringVar', 'BoolVar', 'Read', 'Write', 'DeclarationNum'].includes(blockName)) return 'Variable';
+        if (['If', 'EndIf', 'Not', 'Or', 'And', 'Greater', 'GreaterEqual', 'Less', 'LessEqual', 'Equal', 'NotEqual'].includes(blockName)) return 'Logic';
+        if (['While'].includes(blockName)) return 'Loop';
+        return 'Variable';
     }
 
     const filteredBlockNames = blockNames
@@ -308,18 +314,18 @@ function App() {
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
-                if (block.type === 'Name') {
+                if (block.type === 'String') {
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
                     ctx.fillStyle = '#D4D4D4';
                     ctx.font = 'bold 14px Helvetica';
-                    ctx.fillText('VarName', block.x + 60, block.y + 15);
+                    ctx.fillText('String', block.x + 60, block.y + 15);
                     
                     ctx.font = '12px Helvetica';
                     ctx.fillStyle = '#D6413E';
-                    const instance = block.instance as NameBlock;
-                    const name = instance ? instance.getName() : 'var';
+                    const instance = block.instance as StringConstantBlock;
+                    const name = instance ? instance.getName() : 'String';
                     ctx.fillText(`"${name}"`, block.x + 60, block.y + 35);
 
                     ctx.font = '8px Helvetica';
@@ -488,8 +494,8 @@ function App() {
 
                     setSelectedBlockIds(new Set([block.id]));
 
-                    if (block.type === 'Name') {
-                        const instance = block.instance as NameBlock;
+                    if (block.type === 'String') {
+                        const instance = block.instance as StringConstantBlock;
                         setEditingBlockId(block.id);
                         setEditValue(instance.getName());
                         break;
@@ -519,8 +525,8 @@ function App() {
     const handleBlockClick = (block: typeof blockNames[0]) => {
         const blockInfo = blockRegistry[block.id as keyof typeof blockRegistry];
 
-        if (block.id === 'Name') {
-          const instance = new NameBlock('var');
+        if (block.id === 'String') {
+          const instance = new StringConstantBlock('var');
           setDraggedBlock({
               type: block.typeId,
               name: block.name,
@@ -565,7 +571,7 @@ const handleCanvasClick = () => {
             const blockInfo = blockRegistry[draggedBlock.blockType as keyof typeof blockRegistry];
 
             let instance;
-            if ((draggedBlock.blockType === 'Name' ||
+            if ((draggedBlock.blockType === 'String' ||
                 draggedBlock.blockType === 'NumberConstant' ||
                 draggedBlock.blockType === 'DeclarationNum')
                 && draggedBlock.instance) {
@@ -916,7 +922,7 @@ const handleCanvasClick = () => {
                                     if (e.key === 'Enter') {
                                         const block = blocks.find(b => b.id === editingBlockId);
                                         if (block) {
-                                            if (block.instance instanceof NameBlock) {
+                                            if (block.instance instanceof StringConstantBlock) {
                                                 block.instance.setName(editValue);
                                             } else if (block.instance instanceof NumberConstantBlock) {
                                                 const numValue = parseFloat(editValue) || 0;
@@ -948,7 +954,7 @@ const handleCanvasClick = () => {
                                     if (block.instance instanceof DeclarationBlock) {
                                         block.instance.setNames(editValue);
                                         setBlocks([...blocks]);
-                                    } else if (block.instance instanceof NameBlock) {
+                                    } else if (block.instance instanceof StringConstantBlock) {
                                         block.instance.setName(editValue);
                                     } else if (block.instance instanceof NumberConstantBlock) {
                                         const numValue = parseFloat(editValue) || 0;

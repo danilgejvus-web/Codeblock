@@ -17,14 +17,14 @@ import { NotBlock } from "./logic/NotBlock";
 import { NotEqualBlock } from "./logic/NotEqualBlock";
 import { OrBlock } from "./logic/OrBlock";
 import { WhileBlock } from "./logic/WhileBlock";
-import { BoolBlock } from "./variable/BoolBlock";
+import { BoolBlock } from "./variable/BoolVarBlock";
 import { NumArrayBlock } from "./variable/NumArrayBlock";
 import { NumBlock } from "./variable/NumBlock";
 import { ReadArrayBlock } from "./variable/ReadArrayBlock";
 import { ReadBlock } from "./variable/ReadBlock";
 import { WriteArrayBlock } from "./variable/WriteArrayBlock";
 import { WriteBlock } from "./variable/WriteBlock";
-import { NameBlock } from "./variable/NameBlock";
+import { StringConstantBlock } from "./variable/StringConstantBlock";
 import { NumberConstantBlock } from "./variable/NumberConstantBlock";
 import { StringBlock } from "./variable/StringBlock";
 import { DeclarationBlock } from "./variable/DeclarationBlock";
@@ -81,7 +81,7 @@ export const blockRegistry: Record<string, BlockInfo> = {
         ]
     },
     Num: {
-        name: "Num",
+        name: "NumVar",
         class: NumBlock,
         sockets: [
             {id: "set", type: "input", name: "SetValue"},
@@ -106,15 +106,15 @@ export const blockRegistry: Record<string, BlockInfo> = {
             {id: "out", type: "output", name: "value"}
         ]
     },
-    Name: {
-        name: "Name",
-        class: NameBlock,
+    String: {
+        name: "String",
+        class: StringConstantBlock,
         sockets: [
-            { id: "value", type: "output", name: "Name" }
+            { id: "value", type: "output", name: "string" }
         ]
     },
     NumberConstant: {
-        name: "NumberConstant",
+        name: "Number",
         class: NumberConstantBlock,
         sockets: [
             { id: "value", type: "output", name: "Value" }
@@ -194,7 +194,7 @@ export const blockRegistry: Record<string, BlockInfo> = {
         ]
     },
     Bool: {
-        name: "Bool",
+        name: "BoolVar",
         class: BoolBlock,
         sockets: [
             {id: "set", type: "input", name: "SetValue"},
@@ -272,7 +272,7 @@ export const blockRegistry: Record<string, BlockInfo> = {
         ]
     },
     Str: {
-        name: "String",
+        name: "StringVar",
         class: StringBlock,
         sockets: [
             {id: "set", type: "input", name: "SetValue"},

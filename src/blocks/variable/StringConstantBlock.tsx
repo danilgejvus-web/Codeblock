@@ -1,6 +1,6 @@
 import type { ExecutableBlock, ExecutionContext, ExecutionInput, ExecutionOutput } from "../ExecutableBlock";
 
-export class NameBlock implements ExecutableBlock {
+export class StringConstantBlock implements ExecutableBlock {
     private variableName: string;
 
     constructor(name: string = 'var') {

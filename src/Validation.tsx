@@ -2,7 +2,7 @@ import type { Block } from "./blocks/BlockMetadata";
 import { blockRegistry } from "./blocks/blockRegistry";
 import type { Connection } from "./blocks/ExecutableBlock";
 import type { DeclarationBlock } from "./blocks/variable/DeclarationBlock";
-import type { NameBlock } from "./blocks/variable/NameBlock";
+import type { NameBlock } from "./blocks/variable/StringConstantBlock";
 
 export interface BlockError {
     blockId: string;
