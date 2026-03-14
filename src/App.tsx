@@ -1273,7 +1273,9 @@ const handleCanvasClick = () => {
                     editValue={editValue}
                     onEditValueChange={setEditValue}
                     onSave={() => {
-                        const block = blocks.find(b => b.id === editingBlockId);
+                        const block = editingSubGraph
+                        ? editingSubGraph.blocks.find(b => b.id === editingBlockId)
+                        : blocks.find(b => b.id === editingBlockId);
                         if (!block) return;
 
                         if (block.instance instanceof NumDeclarationBlock ||
