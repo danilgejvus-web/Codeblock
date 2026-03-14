@@ -6,7 +6,7 @@ import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
 import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
-import { validateProgram, type BlockError, type ValidationResult } from './Validation';
+import { validateProgram, type ValidationResult } from './Validation';
 import { NumDeclarationBlock } from './blocks/variable/NumDeclarationBlock';
 import { BooleanConstantBlock } from './blocks/variable/BooleanConstantBlock';
 import { EditDialog } from './components/EditDialog';
@@ -980,7 +980,7 @@ const handleCanvasClick = () => {
         }
     };
 
-    const handleCanvasMouseUp = (e: React.MouseEvent) => {
+    const handleCanvasMouseUp = (_: React.MouseEvent) => {
         if (isSelecting && selectionStart && selectionEnd) {
                 const rect = {
                     left: Math.min(selectionStart.x, selectionEnd.x),
