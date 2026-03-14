@@ -26,6 +26,7 @@ import { StringCastBlock } from './blocks/typecasting/StringCastBlock';
 import { NumCastBlock } from './blocks/typecasting/NumCastBlock';
 import { BooleanCastBlock } from './blocks/typecasting/BooleanCastBlock';
 import { ArrayCastBlock } from './blocks/typecasting/ArrayCastBlock';
+import { ForEachBlock } from './blocks/logic/ForEachBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -220,7 +221,7 @@ function App() {
 
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, [blocks]);
+    }, [blocks, editingSubGraph]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -682,7 +683,7 @@ function App() {
 
         canvas.addEventListener('dblclick', handleDoubleClick);
         return () => canvas.removeEventListener('dblclick', handleDoubleClick);
-    }, [blocks]);
+    }, [blocks, editingSubGraph]);
 
     const handleBlockClick = (block: typeof blockNames[0]) => {
         const blockInfo = blockRegistry[block.id as keyof typeof blockRegistry];
@@ -790,6 +791,15 @@ function App() {
                 instance: instance,
                 subGraph: defaultSubGraph
             });
+        } else if (block.id === 'ForEach') {
+            const instance = new ForEachBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
         } else if (block.id === 'Function') {
             const instance = new FunctionBlock();
             setDraggedBlock({
@@ -822,7 +832,6 @@ function App() {
                 name: block.name,
                 blockType: block.id,
                 instance: instance,
-                subGraph: defaultSubGraph
             });
         } else if (block.id === 'NumCast') {
             const instance = new NumCastBlock();
@@ -971,7 +980,7 @@ const handleCanvasClick = () => {
     };
 
     const handleCanvasMouseUp = (e: React.MouseEvent) => {
-            if (isSelecting && selectionStart && selectionEnd) {
+        if (isSelecting && selectionStart && selectionEnd) {
                 const rect = {
                     left: Math.min(selectionStart.x, selectionEnd.x),
                     right: Math.max(selectionStart.x, selectionEnd.x),
