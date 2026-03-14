@@ -6,7 +6,7 @@ import { blockRegistry } from './blocks/blockRegistry';
 import { execute } from './interpreter';
 import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
-import { validateProgram, type BlockError, type ValidationResult } from './Validation';
+import { validateProgram, type ValidationResult } from './Validation';
 import { NumDeclarationBlock } from './blocks/variable/NumDeclarationBlock';
 import { BooleanConstantBlock } from './blocks/variable/BooleanConstantBlock';
 import { EditDialog } from './components/EditDialog';
@@ -27,6 +27,7 @@ import { NumCastBlock } from './blocks/typecasting/NumCastBlock';
 import { BooleanCastBlock } from './blocks/typecasting/BooleanCastBlock';
 import { ArrayCastBlock } from './blocks/typecasting/ArrayCastBlock';
 import type { ExecutionOutput } from './blocks/ExecutableBlock';
+import { ForEachBlock } from './blocks/logic/ForEachBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -87,10 +88,11 @@ function App() {
     const [selectionStart, setSelectionStart] = useState<Point | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
     const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
-    const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[]} | null>(null);
     const [isRunning, setIsRunning] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
     const [currentStepBlock, setCurrentStepBlock] = useState<string | null>(null)
+    const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[], in: Map<string, string>, out: Map<string, string>} | null>(null);
+    const [mappingTarget, setMappingTarget] = useState<'in' | 'out' | 'continue' | null>(null);
 
     const blockTypes = [
         { id: 'Array', name: 'Array' },
@@ -106,6 +108,7 @@ function App() {
     const compositeTypes = [
         'While',
         'For',
+        'ForEach',
         'Function',
     ];
 
@@ -226,6 +229,17 @@ function App() {
         }
         return sequence;
     }
+
+    const findBlockAtPosition = (x: number, y: number): Block | null => {
+        const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+        for (const block of currentBlocks) {
+            if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
+                return block;
+            }
+        }
+        return null;
+    };
+
     const validateCurrentProgram = useCallback(() => {
         const result = validateProgram(blocks, connections, variables);
         setValidationErrors(result);
@@ -249,7 +263,7 @@ function App() {
 
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, [blocks]);
+    }, [blocks, editingSubGraph]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -678,7 +692,9 @@ function App() {
                         setEditingSubGraph({
                             rootID: block.id,
                             blocks: block.subGraph.blocks,
-                            connections: block.subGraph.connections
+                            connections: block.subGraph.connections,
+                            in: new Map(block.subGraph.in),
+                            out: new Map(block.subGraph.out)
                         });
                         return;
                     }
@@ -732,7 +748,7 @@ function App() {
 
         canvas.addEventListener('dblclick', handleDoubleClick);
         return () => canvas.removeEventListener('dblclick', handleDoubleClick);
-    }, [blocks]);
+    }, [blocks, editingSubGraph]);
 
     const handleBlockClick = (block: typeof blockNames[0]) => {
         const blockInfo = blockRegistry[block.id as keyof typeof blockRegistry];
@@ -840,6 +856,15 @@ function App() {
                 instance: instance,
                 subGraph: defaultSubGraph
             });
+        } else if (block.id === 'ForEach') {
+            const instance = new ForEachBlock();
+            setDraggedBlock({
+                type: block.typeId,
+                name: block.name,
+                blockType: block.id,
+                instance: instance,
+                subGraph: defaultSubGraph
+            });
         } else if (block.id === 'Function') {
             const instance = new FunctionBlock();
             setDraggedBlock({
@@ -872,7 +897,6 @@ function App() {
                 name: block.name,
                 blockType: block.id,
                 instance: instance,
-                subGraph: defaultSubGraph
             });
         } else if (block.id === 'NumCast') {
             const instance = new NumCastBlock();
@@ -950,6 +974,7 @@ const handleCanvasClick = () => {
         const socket = findSocketAtPosition(mousePos.x, mousePos.y);
 
         if (socket && socket.type === 'output') {
+            if (mappingTarget) return;
             setDraggingConnection({
                 fromBlockId: socket.blockId,
                 fromSocketId: socket.socketId,
@@ -959,11 +984,34 @@ const handleCanvasClick = () => {
         }
 
         if (socket && socket.type === 'input') {
+            if (mappingTarget === 'in') {
+                setEditingSubGraph(prev => ({
+                    ...prev!,
+                    in: new Map(prev!.in).set('in', socket!.socketId)
+                }));
+                setMappingTarget(null);
+                return;
+            }
+        }
+
+        const block = findBlockAtPosition(mousePos.x, mousePos.y);
+        if (block) {
+            if (mappingTarget === 'out' || mappingTarget === 'continue') {
+                setEditingSubGraph(prev => ({
+                    ...prev!,
+                    out: new Map(prev!.out).set(mappingTarget, block.id)
+                }));
+                setMappingTarget(null);
+                return;
+            }
+        }
+
+        if (socket && socket.type === 'input') {
             const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
             const connectionToRemove = currentConnections.find(conn => 
                 conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
             );
-            
+
             if (connectionToRemove) {
                 console.log('Удаляем соединение:', connectionToRemove);
                 if (editingSubGraph) {
@@ -1020,8 +1068,8 @@ const handleCanvasClick = () => {
         }
     };
 
-    const handleCanvasMouseUp = (e: React.MouseEvent) => {
-            if (isSelecting && selectionStart && selectionEnd) {
+    const handleCanvasMouseUp = (_: React.MouseEvent) => {
+        if (isSelecting && selectionStart && selectionEnd) {
                 const rect = {
                     left: Math.min(selectionStart.x, selectionEnd.x),
                     right: Math.max(selectionStart.x, selectionEnd.x),
@@ -1236,8 +1284,8 @@ const handleCanvasClick = () => {
                     subGraph: {
                         blocks: editingSubGraph.blocks,
                         connections: editingSubGraph.connections,
-                        in: b.subGraph?.in || new Map(),
-                        out: b.subGraph?.out || new Map()
+                        in: editingSubGraph.in,
+                        out: editingSubGraph.out
                     }
                 } : b
             )
@@ -1261,6 +1309,33 @@ const handleCanvasClick = () => {
                     <button onClick={handleClearCanvas} className="clear-btn">Очистить</button>
                     { editingSubGraph && (
                         <button onClick={handleReturn} className="back-btn">Назад</button>
+                    )}
+                    { editingSubGraph && (
+                        <div className="mapping-controls">
+                            <button
+                                onClick={() => setMappingTarget('in')}
+                                className={mappingTarget === 'in' ? 'active' : ''}
+                            >
+                                Set 'in' socket
+                            </button>
+                            <button
+                                onClick={() => setMappingTarget('out')}
+                                className={mappingTarget === 'out' ? 'active' : ''}
+                            >
+                                Set 'out' block
+                            </button>
+                            <button
+                                onClick={() => setMappingTarget('continue')}
+                                className={mappingTarget === 'continue' ? 'active' : ''}
+                            >
+                                Set 'continue' block
+                            </button>
+                            <div className="current-mappings">
+                                <div>in socket: {editingSubGraph.in.get('in') || 'not set'}</div>
+                                <div>out block: {editingSubGraph.out.get('out') || 'not set'}</div>
+                                <div>continue block: {editingSubGraph.out.get('continue') || 'not set'}</div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
@@ -1291,7 +1366,9 @@ const handleCanvasClick = () => {
                     editValue={editValue}
                     onEditValueChange={setEditValue}
                     onSave={() => {
-                        const block = blocks.find(b => b.id === editingBlockId);
+                        const block = editingSubGraph
+                        ? editingSubGraph.blocks.find(b => b.id === editingBlockId)
+                        : blocks.find(b => b.id === editingBlockId);
                         if (!block) return;
 
                         if (block.instance instanceof NumDeclarationBlock ||
@@ -1310,7 +1387,15 @@ const handleCanvasClick = () => {
                             block.instance.setExpression(editValue);
                         }
 
-                        setBlocks([...blocks]);
+                        if (editingSubGraph) {
+                            setEditingSubGraph({
+                                ...editingSubGraph,
+                                blocks: editingSubGraph.blocks.map(b => b.id === block.id ? block : b)
+                            });
+                        } else {
+                            setBlocks([...blocks]);
+                        }
+
                         setEditingBlockId(null);
                     }}
                     onClose={() => setEditingBlockId(null)}
