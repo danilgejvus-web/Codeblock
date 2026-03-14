@@ -321,7 +321,8 @@ export const blockRegistry: Record<string, BlockInfo> = {
         class: ForBlock,
         sockets: [
             {id: "in", type: "input", name: "in"},
-            {id: "out", type: "output", name: "out"}
+            {id: "out", type: "output", name: "out"},
+            {id: "continue", type: "output", name: "(internal)Continue"}
         ]
     },
     ForEach: {
