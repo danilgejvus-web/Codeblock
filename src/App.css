@@ -18,7 +18,93 @@
 }
 
 
+@media (max-width: 1300px) {
+    .contrainerHeader h1 {
+        font-size: 48px;
+        letter-spacing: -2.5px;
+        margin-bottom: 70px;
+    }
+    .logo {
+        width: 70px;
+        height: 37px;
+    }
 
+    .toolbar {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: auto;
+        width: auto;
+        padding: 5px 10px;
+        border-radius: 8px;
+        display: flex;
+    }
+    .run-btn, .clear-btn 
+    {
+        margin-top: 40px;
+        font-size: 14px;
+        min-height: 40px;
+        border: none;
+        font-weight: bold;
+    }
+
+    .tableDisplay {
+        height: 300px; 
+    }
+
+
+    .containerCreateBlock {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .typeBlock,
+    .nameBlock,
+    .imgContainerBlock {
+        width: 100% !important;
+        height: auto;
+        border-left: 2px solid #D6413E;
+        border-right: 2px solid #D6413E;
+    }
+
+    .typeBlock {
+        border-bottom: none;
+    }
+    .nameBlock {
+        border-top: none;
+        border-bottom: none;
+    }
+    .imgContainerBlock {
+        border-top: none;
+    }
+
+    .typeBlock {
+        height: 200px;
+    }
+    .nameBlock {
+        height: 200px;
+    }
+
+    .searchForm__txt {
+        font-size: 18px;
+        padding-left: 20px;
+        padding-bottom: 8px;
+    }
+    .searchForm__btn {
+        padding-right: 5px;
+    }
+    .searchForm__img {
+        width: 30px;
+        height: 26px;
+    }
+
+    .developers {
+        font-size: 12px;
+    }
+    .developers li {
+        font-size: 12px;
+    }
+}
 .contrainerHeader {
     display: flex;
     align-items: center;
