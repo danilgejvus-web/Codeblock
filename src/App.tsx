@@ -1227,7 +1227,15 @@ const handleCanvasClick = () => {
                             block.instance.setExpression(editValue);
                         }
 
-                        setBlocks([...blocks]);
+                        if (editingSubGraph) {
+                            setEditingSubGraph({
+                                ...editingSubGraph,
+                                blocks: editingSubGraph.blocks.map(b => b.id === block.id ? block : b)
+                            });
+                        } else {
+                            setBlocks([...blocks]);
+                        }
+                        
                         setEditingBlockId(null);
                     }}
                     onClose={() => setEditingBlockId(null)}
