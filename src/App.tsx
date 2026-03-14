@@ -941,19 +941,21 @@ const handleCanvasClick = () => {
                 setMappingTarget(null);
                 return;
             }
+        }
 
-            const block = findBlockAtPosition(mousePos.x, mousePos.y);
-            if (block) {
-                if (mappingTarget === 'out' || mappingTarget === 'continue') {
-                    setEditingSubGraph(prev => ({
-                        ...prev!,
-                        out: new Map(prev!.out).set(mappingTarget, block.id)
-                    }));
-                    setMappingTarget(null);
-                    return;
-                }
+        const block = findBlockAtPosition(mousePos.x, mousePos.y);
+        if (block) {
+            if (mappingTarget === 'out' || mappingTarget === 'continue') {
+                setEditingSubGraph(prev => ({
+                    ...prev!,
+                    out: new Map(prev!.out).set(mappingTarget, block.id)
+                }));
+                setMappingTarget(null);
+                return;
             }
+        }
 
+        if (socket && socket.type === 'input') {
             const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
             const connectionToRemove = currentConnections.find(conn => 
                 conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
@@ -970,7 +972,7 @@ const handleCanvasClick = () => {
                     setConnections(prev => prev.filter(conn => conn.id !== connectionToRemove.id));
                 }
             }
-                return;
+            return;
         }
 
         const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
