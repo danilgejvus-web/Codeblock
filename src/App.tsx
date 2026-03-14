@@ -1312,24 +1312,26 @@ const handleCanvasClick = () => {
                     )}
                     { editingSubGraph && (
                         <div className="mapping-controls">
-                            <button
+                            <div className="in-out-con">
+                                <button
                                 onClick={() => setMappingTarget('in')}
-                                className={mappingTarget === 'in' ? 'active' : ''}
+                                className="in-btn"
                             >
                                 Set 'in' socket
                             </button>
                             <button
                                 onClick={() => setMappingTarget('out')}
-                                className={mappingTarget === 'out' ? 'active' : ''}
+                                className="out-btn"
                             >
-                                Set 'out' block
+                                Set 'out'
                             </button>
                             <button
                                 onClick={() => setMappingTarget('continue')}
-                                className={mappingTarget === 'continue' ? 'active' : ''}
+                                className="con-btn"
                             >
-                                Set 'continue' block
+                                Set 'continue'
                             </button>
+                            </div>     
                             <div className="current-mappings">
                                 <div>in socket: {editingSubGraph.in.get('in') || 'not set'}</div>
                                 <div>out block: {editingSubGraph.out.get('out') || 'not set'}</div>

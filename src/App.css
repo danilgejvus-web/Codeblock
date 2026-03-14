@@ -29,7 +29,9 @@
         width: 70px;
         height: 37px;
     }
-
+    .mapping-controls{
+        margin-left: 150px;
+    }
     .toolbar {
         position: absolute;
         top: 10px;
@@ -44,7 +46,7 @@
     {
         margin-top: 40px;
         font-size: 14px;
-        min-height: 40px;
+        max-height: 40px;
         border: none;
         font-weight: bold;
     }
@@ -305,20 +307,34 @@ ul.nameBlockUl li:last-child{
     display: flex;
     gap: 10px;
 }
-
-.run-btn, .clear-btn,.back-btn {
+.mapping-controls{
+    display: flex;
+}
+.current-mappings{
+    max-height: 100%;
+}
+.in-out-con{
+    display: flex;
+    flex-direction: column;
+    max-width: 150px;
+}
+.run-btn, .clear-btn,.back-btn, .in-btn, .out-btn, .con-btn{
     padding: 10px 20px;
     border: none;
+    max-height: 40px;
     border-radius: 4px;
     font-weight: bold;
     background: #D6413E;
     color: white;
 }
-
+.in-btn, .out-btn, .con-btn{
+    max-height: 30px;
+    font-size: 9pt;
+}
 .run-btn { 
     background: #D6413E; 
 }
-.clear-btn { 
+.clear-btn, .in-btn, .out-btn, .con-btn{ 
     background: #D4D4D4; 
 }
 .back-btn{
