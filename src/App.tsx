@@ -3,7 +3,6 @@ import './App.css';
 import type { Block, SubGraph } from './blocks/BlockMetadata';
 import type { Connection } from './blocks/ExecutableBlock';
 import { blockRegistry } from './blocks/blockRegistry';
-import { execute } from './interpreter';
 import { StringConstantBlock } from './blocks/variable/StringConstantBlock';
 import { NumberConstantBlock } from './blocks/variable/NumberConstantBlock';
 import { validateProgram, type ValidationResult } from './Validation';
@@ -26,7 +25,7 @@ import { StringCastBlock } from './blocks/typecasting/StringCastBlock';
 import { NumCastBlock } from './blocks/typecasting/NumCastBlock';
 import { BooleanCastBlock } from './blocks/typecasting/BooleanCastBlock';
 import { ArrayCastBlock } from './blocks/typecasting/ArrayCastBlock';
-import type { ExecutionOutput } from './blocks/ExecutableBlock';
+import type { ExecutionOutput, ExecutionInput } from './blocks/ExecutableBlock';
 import { ForEachBlock } from './blocks/logic/ForEachBlock';
 
 //TO DO
