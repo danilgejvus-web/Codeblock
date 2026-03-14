@@ -87,7 +87,8 @@ function App() {
     const [selectionStart, setSelectionStart] = useState<Point | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
     const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
-    const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[]} | null>(null);
+    const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[], in: Map<string, string>, out: Map<string, string>} | null>(null);
+    const [mappingTarget, setMappingTarget] = useState<'in' | 'out' | 'continue' | null>(null);
 
     const blockTypes = [
         { id: 'Array', name: 'Array' },
@@ -194,6 +195,16 @@ function App() {
                 if (distance < 10) {
                     return socket;
                 }
+            }
+        }
+        return null;
+    };
+
+    const findBlockAtPosition = (x: number, y: number): Block | null => {
+        const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
+        for (const block of currentBlocks) {
+            if (x >= block.x && x <= block.x + 120 && y >= block.y && y <= block.y + 60) {
+                return block;
             }
         }
         return null;
@@ -630,7 +641,9 @@ function App() {
                         setEditingSubGraph({
                             rootID: block.id,
                             blocks: block.subGraph.blocks,
-                            connections: block.subGraph.connections
+                            connections: block.subGraph.connections,
+                            in: new Map(block.subGraph.in),
+                            out: new Map(block.subGraph.out)
                         });
                         return;
                     }
@@ -910,6 +923,7 @@ const handleCanvasClick = () => {
         const socket = findSocketAtPosition(mousePos.x, mousePos.y);
 
         if (socket && socket.type === 'output') {
+            if (mappingTarget) return;
             setDraggingConnection({
                 fromBlockId: socket.blockId,
                 fromSocketId: socket.socketId,
@@ -919,11 +933,32 @@ const handleCanvasClick = () => {
         }
 
         if (socket && socket.type === 'input') {
+            if (mappingTarget === 'in') {
+                setEditingSubGraph(prev => ({
+                    ...prev!,
+                    in: new Map(prev!.in).set('in', socket!.socketId)
+                }));
+                setMappingTarget(null);
+                return;
+            }
+
+            const block = findBlockAtPosition(mousePos.x, mousePos.y);
+            if (block) {
+                if (mappingTarget === 'out' || mappingTarget === 'continue') {
+                    setEditingSubGraph(prev => ({
+                        ...prev!,
+                        out: new Map(prev!.out).set(mappingTarget, block.id)
+                    }));
+                    setMappingTarget(null);
+                    return;
+                }
+            }
+
             const currentConnections = editingSubGraph ? editingSubGraph.connections : connections;
             const connectionToRemove = currentConnections.find(conn => 
                 conn.toBlockID === socket.blockId && conn.toSocketID === socket.socketId
             );
-            
+
             if (connectionToRemove) {
                 console.log('Удаляем соединение:', connectionToRemove);
                 if (editingSubGraph) {
@@ -935,7 +970,7 @@ const handleCanvasClick = () => {
                     setConnections(prev => prev.filter(conn => conn.id !== connectionToRemove.id));
                 }
             }
-            return;
+                return;
         }
 
         const currentBlocks = editingSubGraph ? editingSubGraph.blocks : blocks;
@@ -1154,8 +1189,8 @@ const handleCanvasClick = () => {
                     subGraph: {
                         blocks: editingSubGraph.blocks,
                         connections: editingSubGraph.connections,
-                        in: b.subGraph?.in || new Map(),
-                        out: b.subGraph?.out || new Map()
+                        in: editingSubGraph.in,
+                        out: editingSubGraph.out
                     }
                 } : b
             )
@@ -1179,6 +1214,33 @@ const handleCanvasClick = () => {
                     <button onClick={handleClearCanvas} className="clear-btn">Очистить</button>
                     { editingSubGraph && (
                         <button onClick={handleReturn} className="back-btn">Назад</button>
+                    )}
+                    { editingSubGraph && (
+                        <div className="mapping-controls">
+                            <button
+                                onClick={() => setMappingTarget('in')}
+                                className={mappingTarget === 'in' ? 'active' : ''}
+                            >
+                                Set 'in' socket
+                            </button>
+                            <button
+                                onClick={() => setMappingTarget('out')}
+                                className={mappingTarget === 'out' ? 'active' : ''}
+                            >
+                                Set 'out' block
+                            </button>
+                            <button
+                                onClick={() => setMappingTarget('continue')}
+                                className={mappingTarget === 'continue' ? 'active' : ''}
+                            >
+                                Set 'continue' block
+                            </button>
+                            <div className="current-mappings">
+                                <div>in socket: {editingSubGraph.in.get('in') || 'not set'}</div>
+                                <div>out block: {editingSubGraph.out.get('out') || 'not set'}</div>
+                                <div>continue block: {editingSubGraph.out.get('continue') || 'not set'}</div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
