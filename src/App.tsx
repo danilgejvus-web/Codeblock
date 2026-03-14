@@ -103,6 +103,7 @@ function App() {
     const compositeTypes = [
         'While',
         'For',
+        'ForEach',
         'Function',
     ];
 
@@ -1235,7 +1236,7 @@ const handleCanvasClick = () => {
                         } else {
                             setBlocks([...blocks]);
                         }
-                        
+
                         setEditingBlockId(null);
                     }}
                     onClose={() => setEditingBlockId(null)}
