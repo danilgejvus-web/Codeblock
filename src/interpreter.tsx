@@ -2,13 +2,13 @@ import type { ExecutionInput, ExecutionOutput, Connection } from "./blocks/Execu
 import type { Block } from './blocks/BlockMetadata';
 import type { LocalExecutionContext } from "./storages/LocalExecutionContext";
 
-export function execute(
+export async function execute(
     blocks: Block[],
     connections: Connection[],
     context: LocalExecutionContext,
-)
-: Map<string, ExecutionOutput> 
-{
+    onStep?: (blockId: string, outputs: Map<string, ExecutionOutput>) => void,
+    delayMs: number = 500
+): Promise<Map<string, ExecutionOutput>> {
     const graph = new Map<string, string[]>();
     const inDegree = new Map<string, number>();
     const inputSources = new Map<string, Map<string, { fromBlockID: string, fromSocketID: string }>>();
@@ -45,14 +45,13 @@ export function execute(
             if (inDegree.get(next) === 0) { queue.push(next); };
         });
     }
-
     const outputs = new Map<string, ExecutionOutput>();
-    sequence.forEach(blockID => {
+    for (const blockID of sequence) {
         const block = blocks.find(b => b.id === blockID)!;
         const instance = block.instance;
         const inputs: ExecutionInput = {};
         const sourceMap = inputSources.get(blockID)!;
-        
+
         sourceMap.forEach((sourceInfo, toSocketID) => {
             const sourceOutput = outputs.get(sourceInfo.fromBlockID);
             if (sourceOutput && sourceOutput[sourceInfo.fromSocketID] !== undefined) {
@@ -60,21 +59,20 @@ export function execute(
             }
         });
 
-        // if (block.subGraph) {
-        //     const subInput = new Map<string, any>();
-        //     block.subGraph.in.forEach((inputBlockID, socketID) => {
-        //         const inValue = inputs[socketID];
-        //         if (inValue !== undefined) {
-        //             subInput.set(inputBlockID, inValue);
-        //         }
-        //     })
-        // }
-
-        const subContext = block.subGraph ? (context as LocalExecutionContext).newSubContext(block.subGraph, block.id): context;
+        const subContext = block.subGraph
+            ? (context as LocalExecutionContext).newSubContext(block.subGraph, block.id)
+            : context;
 
         const output = instance!.execute(inputs, subContext);
         outputs.set(blockID, output);
-    });
 
+        if (onStep) {
+            onStep(blockID, outputs);
+        }
+
+        if (delayMs > 0 && blockID !== sequence[sequence.length - 1]) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
     return outputs;
 }

@@ -26,6 +26,7 @@ import { StringCastBlock } from './blocks/typecasting/StringCastBlock';
 import { NumCastBlock } from './blocks/typecasting/NumCastBlock';
 import { BooleanCastBlock } from './blocks/typecasting/BooleanCastBlock';
 import { ArrayCastBlock } from './blocks/typecasting/ArrayCastBlock';
+import type { ExecutionOutput } from './blocks/ExecutableBlock';
 
 //TO DO
 // *добавить логику Read в инпуты, которым нужно значение. То есть они будут принимать либо константу, либо название переменной и брать по нему значение
@@ -87,6 +88,9 @@ function App() {
     const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
     const [selectedBlockIds, setSelectedBlockIds] = useState<Set<string>>(new Set());
     const [editingSubGraph, setEditingSubGraph] = useState<{rootID: string, blocks: Block[], connections: Connection[]} | null>(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const [currentStepBlock, setCurrentStepBlock] = useState<string | null>(null)
 
     const blockTypes = [
         { id: 'Array', name: 'Array' },
@@ -196,7 +200,32 @@ function App() {
         }
         return null;
     };
-
+    function computeTopologicalOrder(blocks: Block[], connections: Connection[]): string[] {
+        const graph = new Map<string, string[]>();
+        const inDegree = new Map<string, number>();
+        blocks.forEach(b => {
+            graph.set(b.id, []);
+            inDegree.set(b.id, 0);
+        });
+        connections.forEach(c => {
+            graph.get(c.fromBlockID)!.push(c.toBlockID);
+            inDegree.set(c.toBlockID, (inDegree.get(c.toBlockID) || 0) + 1);
+        });
+        const queue: string[] = [];
+        inDegree.forEach((degree, id) => {
+            if (degree === 0) queue.push(id);
+        });
+        const sequence: string[] = [];
+        while (queue.length) {
+            const current = queue.shift()!;
+            sequence.push(current);
+            graph.get(current)?.forEach(next => {
+                inDegree.set(next, inDegree.get(next)! - 1);
+                if (inDegree.get(next) === 0) queue.push(next);
+            });
+        }
+        return sequence;
+    }
     const validateCurrentProgram = useCallback(() => {
         const result = validateProgram(blocks, connections, variables);
         setValidationErrors(result);
@@ -362,15 +391,23 @@ function App() {
                     ctx.shadowColor = '#FF4444';
                     ctx.shadowBlur = 20;
                     ctx.shadowOffsetY = 0;
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
                 } else if (blockWarnings.length > 0) {
                     ctx.shadowColor = '#FFC107';
                     ctx.shadowBlur = 20;
                     ctx.shadowOffsetY = 0;
                 }
-
-                ctx.shadowBlur = 0;
-                ctx.shadowColor = 'transparent';
-                ctx.strokeStyle = selectedBlockIds.has(block.id) ? '#FFC107' : '#D6413E';;
+                if (block.id === currentStepBlock) {
+                    ctx.shadowColor = 'rgba(118, 255, 187, 0.4)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetY = 2;
+                    ctx.strokeStyle = '#4CAF50';
+                } else if (selectedBlockIds.has(block.id)) {
+                    ctx.strokeStyle = '#FFC107';
+                } else {
+                    ctx.strokeStyle = '#D6413E';
+                }
                 ctx.lineWidth = 2;
                 ctx.strokeRect(block.x, block.y, 120, 60);
 
@@ -414,6 +451,7 @@ function App() {
                     
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'alphabetic';
+               
                 } else if (block.type === 'BooleanConstant') {
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
@@ -531,7 +569,19 @@ function App() {
                     ctx.fillStyle = '#FFC107';
                     ctx.fillText('⚠', block.x + 100, block.y + 25);
                 }
-
+                if (block.id === currentStepBlock) {
+                    ctx.shadowColor = '#4CAF50';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetY = 0;
+                } else if (selectedBlockIds.has(block.id)) {
+                    ctx.shadowColor = '#D6413E';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetY = 0;
+                } else {
+                    ctx.shadowColor = 'rgba(214, 65, 62, 0.3)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetY = 2;
+                }
                 const sockets = getBlockSockets(block);
                 sockets.forEach(socket => {
                     ctx.beginPath();
@@ -606,7 +656,7 @@ function App() {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockIds]);
+    }, [blocks, draggedBlock, mousePos, connections, draggingConnection, hoveredSocket, selectedBlockIds, currentStepBlock]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -1093,38 +1143,80 @@ const handleCanvasClick = () => {
       setHoveredSocket(socket);
     };
 
-    const handleRunCode = () => {
-        try {
-            const blockMap = new Map(blocks.map(b => [b.id, b.instance!]));
-            const context = new LocalExecutionContext(blockMap);
 
-            console.log('Запуск интерпретатора...');
-            console.log('Блоков:', blocks.length);
-            console.log('Соединений:', connections.length);
 
-            const results = execute(blocks, connections, context);
+   const handleRunCode = async () => {
+    if (isRunning) {
+        abortControllerRef.current?.abort();
+        return;
+    }
 
-            console.log('Результаты:', results);
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
-            if (results.size === 0) {
-                setExecutionResult('Программа выполнена. Нет выходных данных.');
-            } else {
-                let resultText = 'Результаты:\n\n';
-                results.forEach((output, blockId) => {
-                    const block = blocks.find(b => b.id === blockId);
-                    resultText += `${block?.name}:\n`;
-                    resultText += `${JSON.stringify(output, null, 2)}\n`;
-                    resultText += '─'.repeat(30) + '\n';
-                });
-                setExecutionResult(resultText);
+    setIsRunning(true);
+    setExecutionResult('');
+
+    try {
+        const sequence = computeTopologicalOrder(blocks, connections);
+
+        const inputSources = new Map<string, Map<string, { fromBlockID: string, fromSocketID: string }>>();
+        blocks.forEach(b => inputSources.set(b.id, new Map()));
+        connections.forEach(c => {
+            const targetMap = inputSources.get(c.toBlockID)!;
+            targetMap.set(c.toSocketID, { fromBlockID: c.fromBlockID, fromSocketID: c.fromSocketID });
+        });
+
+        const blockMap = new Map(blocks.map(b => [b.id, b.instance!]));
+        const context = new LocalExecutionContext(blockMap);
+        const outputs = new Map<string, ExecutionOutput>();
+
+        for (const blockID of sequence) {
+            if (signal.aborted) {
+                break;
             }
 
+            const block = blocks.find(b => b.id === blockID)!;
+            const instance = block.instance;
+            const inputs: ExecutionInput = {};
+            const sourceMap = inputSources.get(blockID)!;
+
+            sourceMap.forEach((sourceInfo, toSocketID) => {
+                const sourceOutput = outputs.get(sourceInfo.fromBlockID);
+                if (sourceOutput && sourceOutput[sourceInfo.fromSocketID] !== undefined) {
+                    inputs[toSocketID] = sourceOutput[sourceInfo.fromSocketID];
+                }
+            });
+            const subContext = block.subGraph
+                ? context.newSubContext(block.subGraph, block.id)
+                : context;
+
+            const output = instance!.execute(inputs, subContext);
+            outputs.set(blockID, output);
+            setCurrentStepBlock(blockID);
+            if (blockID !== sequence[sequence.length - 1]) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+        if (!signal.aborted) {
+            let resultText = 'Результаты:\n\n';
+            outputs.forEach((output, blockId) => {
+                const block = blocks.find(b => b.id === blockId);
+                resultText += `${block?.name}:\n${JSON.stringify(output, null, 2)}\n`;
+                resultText += '─'.repeat(30) + '\n';
+            });
+            setExecutionResult(resultText);
+        } else {
+            setExecutionResult('Выполнение прервано.');
+        }
         } catch (error) {
-            console.error('Ошибка:', error);
             setExecutionResult(`Ошибка: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            setIsRunning(false);
+            setCurrentStepBlock(null);
+            abortControllerRef.current = null;
         }
     };
-
     const handleClearCanvas = () => {
         setBlocks([]);
         setConnections([]);
@@ -1165,7 +1257,7 @@ const handleCanvasClick = () => {
 
             <main>
                 <div className="toolbar">
-                    <button onClick={handleRunCode} className="run-btn">Запустить</button>
+                    <button onClick={handleRunCode} className="run-btn">{isRunning ? 'Стоп' : 'Запустить'}</button>
                     <button onClick={handleClearCanvas} className="clear-btn">Очистить</button>
                     { editingSubGraph && (
                         <button onClick={handleReturn} className="back-btn">Назад</button>

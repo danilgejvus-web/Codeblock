@@ -25,6 +25,7 @@
         margin-bottom: 70px;
     }
     .logo {
+        margin-left: 60px;
         width: 70px;
         height: 37px;
     }
@@ -39,7 +40,7 @@
         border-radius: 8px;
         display: flex;
     }
-    .run-btn, .clear-btn 
+    .run-btn, .clear-btn, .back-btn
     {
         margin-top: 40px;
         font-size: 14px;
@@ -305,7 +306,7 @@ ul.nameBlockUl li:last-child{
     gap: 10px;
 }
 
-.run-btn, .clear-btn {
+.run-btn, .clear-btn,.back-btn {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
@@ -319,6 +320,9 @@ ul.nameBlockUl li:last-child{
 }
 .clear-btn { 
     background: #D4D4D4; 
+}
+.back-btn{
+    background: #D4D4D4;
 }
 .execution-result {
     padding: 15px;
